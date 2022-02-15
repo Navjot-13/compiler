@@ -21,26 +21,32 @@ int yyerror(char *);
 program:    func_list BEGIN statements;
 
 /*----------------Function Declaration ----------------------*/
-func_list:  func_list function |  ;
-function:   data_type ID '(' params ')' statements;
-params:     param_list | ;
-param_list: param_list param_type | param_type;
-param_type: data_type ID;
+func_list:    func_list function |  ;
+function:     data_type ID '(' params ')' statements;
+params:       param_list | ;
+param_list:   param_list param_type | param_type;
+param_type:   data_type ID;
 /*------------------------------------------------------------*/
 
 
-statements: '{' stmt_list '}' | stmt;
-stmt_list:  stmt_list stmt | stmt;
-stmt:       
+/*------------------Statement Declaration---------------------*/
+statements:   '{' stmt_list '}' | stmt;
+stmt_list:    stmt_list stmt | stmt;
+stmt:         assign_stmt | if_stmt | loop_stmt | array_decl | func_call;
 
+assign_stmt:  data_type L SCOL;
+L:            L, ID | ID;
 
-decl_stmts: decl_stmts decl | decl;
+if_stmt:      IF '(' condition ')' statements cond_stmt2;
+cond_stmt2:   ELSE cond_stmt3 | ;
+cond_stmt3:   cond_stmt | statements;
 
-decl:       var_decl | fun_decl;
+loop_stmt:    IFLOOP '(' condition ')' statements;
 
+array_decl:   ARRAY <data_type, NUM> ID SCOL;
 
-var_decl:   datatype L SCOL;
+data_type:    INT | DCML | STR | BOOL;
+/*------------------------------------------------------------*/
 
-L:          L, ID | ID;
 
 

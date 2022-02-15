@@ -6,7 +6,6 @@
 digit [0-9]
 letter [A-Za-z]
 letter_ [A-Za-z_]
-keyword ( begin | void | int | decimal | bool | char | string | array | if | else | elseif | ifloop | return | and | or | not )
 
 %%
 
@@ -28,6 +27,20 @@ keyword ( begin | void | int | decimal | bool | char | string | array | if | els
 
 ";"				                return ';';
 
+"<"                             return '<';
+
+">"                             return '>';
+
+"=="                            return EQ;
+
+"!="                            return NEQ;
+
+"and" | "&&"			        return AND;     
+
+"or" | "||"	                    return OR;
+
+"not" | "!"                     return NOT;
+
 "+"                             return ADD;
  
 "-"				                return SUB;
@@ -38,37 +51,35 @@ keyword ( begin | void | int | decimal | bool | char | string | array | if | els
 
 "="   			                return ASSIGN;
 
-"=="                            return EQ;
-
-"!="                            return NEQ;
-
 "true"                          return TRU;
 
 "false"                         return FLS;
-
-"and"			                return AND;     
-
-"or"		                    return OR;
-
-"not"                           return NOT;
 
 "int"                           return INT;
 
 "decimal"                       return DCML;
 
-"double"                        return DBL;
-
-"char"                          return CHAR;
-
 "bool"                          return BOOL;
 
 "string"                        return STR;
 
-keyword                         { return KW;}
+"array"                         return ARR;
 
-\".*\"                          { return STR_CONST; }
+"if"                            return IF;
 
-\'{letter}\'                    { return CHAR_CONST; }
+"else"                          return ELSE;
+
+"elseif"                        return ELIF;
+
+"ifloop"                        return LP;
+
+"return"                        return RETURN;
+
+"##.*"                          { return CMNT; }
+
+"#\*(\*(?!#)|[^*])*\*#"         { return MLTI_CMNT; }
+
+"\".*\"" | "\'.*\'"             { return STR_CONST; }
 
 "-"?{digit}+                    { return INT_CONST; }
 

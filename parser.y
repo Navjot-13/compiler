@@ -56,7 +56,7 @@ assign_stmt:        data_type L SCOL;
 
 L:                  L, ID | ID;
 
-array_decl:         ARRAY <data_type, NUM> ID SCOL;
+array_decl:         ARRAY '<'data_type, NUM'>' ID SCOL;
 
 
 expressions:        expr SCOL;
@@ -110,14 +110,14 @@ unary_op_stmt:      NOT unary_op_stmt
                     | constant;
 
 
-cond_stmt:          IF '(' condition ')' statements cond_stmt2;
+cond_stmt:          IF '(' expr ')' statements cond_stmt2;
 
 cond_stmt2:         ELSE cond_stmt3 | ;
 
 cond_stmt3:         cond_stmt | statements;
 
 
-loop_stmt:          IFLOOP '(' condition ')' statements;
+loop_stmt:          IFLOOP '(' expr ')' statements;
 
 
 data_type:          INT | DCML | STR | BOOL;

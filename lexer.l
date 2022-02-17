@@ -35,6 +35,18 @@ letter_ [A-Za-z_]
 
 "!="                            return NEQ;
 
+"++"                            return INCR;
+
+"--"                            return DECR;
+
+"+="                            return AEQ;
+
+"-="                            return SEQ;
+
+"*="                            return MEQ;
+
+"/="                            return DEQ;
+
 "and" | "&&"			        return AND;     
 
 "or" | "||"	                    return OR;
@@ -68,8 +80,6 @@ letter_ [A-Za-z_]
 "if"                            return IF;
 
 "else"                          return ELSE;
-
-"elseif"                        return ELIF;
 
 "ifloop"                        return LP;
 

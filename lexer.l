@@ -31,6 +31,10 @@ letter_ [A-Za-z_]
 
 ">"                             return '>';
 
+">="                            return '>=';
+
+"<="                            return '<=';
+
 "=="                            return EQ;
 
 "!="                            return NEQ;

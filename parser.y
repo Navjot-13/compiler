@@ -14,7 +14,7 @@ int yyerror(char *);
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BEGIN
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BEGIN AEQ MEQ SEQ DEQ INCR DECR
 %token <int_val> INT_CONST
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST
@@ -38,7 +38,7 @@ param_type:         data_type ID;
 args:               arg_list
                     | ;
 
-arg_list:           arg_list, expr
+arg_list:           arg_list',' expr
                     | expr;        
 /*------------------------------------------------------------*/
 
@@ -54,20 +54,20 @@ stmt:               assign_stmt | if_stmt | loop_stmt | array_decl | expressions
 
 assign_stmt:        data_type L SCOL;
 
-L:                  L, ID | ID;
+L:                  L',' ID | ID;
 
-array_decl:         ARRAY '<'data_type, NUM'>' ID SCOL;
+array_decl:         ARRAY '<'data_type',' NUM'>' ID SCOL;
 
 
 expressions:        expr SCOL;
 
 expr:               variable ASSIGN expr
-                    | variable '+=' expr
-                    | variable '-=' expr
-                    | variable '*=' expr
-                    | variable '/=' expr
-                    | variable '++'
-                    | variable '--'
+                    | variable AEQ expr
+                    | variable SEQ expr
+                    | variable MEQ expr
+                    | variable DEQ expr
+                    | variable INCR
+                    | variable DECR
                     | cond_or_stmt;
 
 variable:           ID
@@ -124,5 +124,20 @@ data_type:          INT | DCML | STR | BOOL;
 constant:           INT_CONST | DCML_CONST | STR_CONST;
 /*------------------------------------------------------------*/
 
+%%
 
+int main(int argc, char *argv[])
+{
+   if (argc != 2) {
+       printf("\nUsage: <exefile> <inputfile>\n");
+       exit(0);
+   }
+   yyin = fopen(argv[1], "r");
+  yyparse();
+}
+
+
+int yyerror(char *s){
+  printf("\n\nError: %s\n", s);
+}
 

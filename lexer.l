@@ -41,7 +41,7 @@ letter_ [A-Za-z_]
 
 "+="                            return AEQ;
 
-"-="                            return SEQ;
+"-="                            return SEQ;giat
 
 "*="                            return MEQ;
 

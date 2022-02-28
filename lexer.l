@@ -63,6 +63,8 @@ letter_ [A-Za-z_]
 
 "="   			                return ASSIGN;
 
+"break"                         return BRK;
+
 "true"                          return TRU;
 
 "false"                         return FLS;

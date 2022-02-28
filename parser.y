@@ -14,13 +14,13 @@ int yyerror(char *);
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BEGIN AEQ MEQ SEQ DEQ INCR DECR
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT
 %token <int_val> INT_CONST
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST
 %%
 
-program:            func_list BEGIN statements;
+program:            func_list BGN statements;
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function |  ;
@@ -49,14 +49,14 @@ statements:         '{' stmt_list '}' | stmt;
 
 stmt_list:          stmt_list stmt | stmt;
 
-stmt:               assign_stmt | if_stmt | loop_stmt | array_decl | expressions;
+stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressions;
 
 
 assign_stmt:        data_type L SCOL;
 
 L:                  L',' ID | ID;
 
-array_decl:         ARRAY '<'data_type',' NUM'>' ID SCOL;
+array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
 
 
 expressions:        expr SCOL;
@@ -92,8 +92,8 @@ comp_stmt:          comp_stmt comp_op arithmetic_stmt1
 
 comp_op:            '>'
                     | '<'
-                    | '>='
-                    | '<=';
+                    | GEQ
+                    | LEQ;
 
 arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2
                     | arithmetic_stmt1 SUB arithmetic_stmt2
@@ -117,7 +117,7 @@ cond_stmt2:         ELSE cond_stmt3 | ;
 cond_stmt3:         cond_stmt | statements;
 
 
-loop_stmt:          IFLOOP '(' expr ')' statements;
+loop_stmt:          LP '(' expr ')' statements;
 
 
 data_type:          INT | DCML | STR | BOOL;

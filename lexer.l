@@ -1,6 +1,7 @@
 %{
-    
-    
+#include <stdio.h>
+#include <stdlib.h>
+#include "y.tab.h"
 %}
 
 digit [0-9]
@@ -31,9 +32,9 @@ letter_ [A-Za-z_]
 
 ">"                             return '>';
 
-">="                            return '>=';
+">="                            return GEQ;
 
-"<="                            return '<=';
+"<="                            return LEQ;
 
 "=="                            return EQ;
 
@@ -45,7 +46,7 @@ letter_ [A-Za-z_]
 
 "+="                            return AEQ;
 
-"-="                            return SEQ;giat
+"-="                            return SEQ;
 
 "*="                            return MEQ;
 

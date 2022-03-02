@@ -14,13 +14,13 @@ int yyerror(char *);
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BEGIN
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT
 %token <int_val> INT_CONST
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST
 %%
 
-program:            func_list BEGIN statements;
+program:            func_list BGN statements;
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function |  ;
@@ -38,7 +38,7 @@ param_type:         data_type ID;
 args:               arg_list
                     | ;
 
-arg_list:           arg_list, expr
+arg_list:           arg_list',' expr
                     | expr;        
 /*------------------------------------------------------------*/
 
@@ -49,25 +49,25 @@ statements:         '{' stmt_list '}' | stmt;
 
 stmt_list:          stmt_list stmt | stmt;
 
-stmt:               assign_stmt | if_stmt | loop_stmt | array_decl | expressions;
+stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressions;
 
 
 assign_stmt:        data_type L SCOL;
 
-L:                  L, ID | ID;
+L:                  L',' ID | ID;
 
-array_decl:         ARRAY '<'data_type, NUM'>' ID SCOL;
+array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
 
 
 expressions:        expr SCOL;
 
 expr:               variable ASSIGN expr
-                    | variable '+=' expr
-                    | variable '-=' expr
-                    | variable '*=' expr
-                    | variable '/=' expr
-                    | variable '++'
-                    | variable '--'
+                    | variable AEQ expr
+                    | variable SEQ expr
+                    | variable MEQ expr
+                    | variable DEQ expr
+                    | variable INCR
+                    | variable DECR
                     | cond_or_stmt;
 
 variable:           ID
@@ -92,8 +92,8 @@ comp_stmt:          comp_stmt comp_op arithmetic_stmt1
 
 comp_op:            '>'
                     | '<'
-                    | '>='
-                    | '<=';
+                    | GEQ
+                    | LEQ;
 
 arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2
                     | arithmetic_stmt1 SUB arithmetic_stmt2
@@ -110,19 +110,33 @@ unary_op_stmt:      NOT unary_op_stmt
                     | constant;
 
 
-cond_stmt:          IF '(' expr ')' statements cond_stmt2;
+cond_stmt:          IF '(' expr ')' '{'statements'}' cond_stmt2;
 
-cond_stmt2:         ELSE cond_stmt3 | ;
-
-cond_stmt3:         cond_stmt | statements;
+cond_stmt2:         ELSE stmt | ;
 
 
-loop_stmt:          IFLOOP '(' expr ')' statements;
+
+loop_stmt:          LP '(' expr ')' '{' statements '}';
 
 
 data_type:          INT | DCML | STR | BOOL;
 constant:           INT_CONST | DCML_CONST | STR_CONST;
 /*------------------------------------------------------------*/
 
+%%
 
+int main(int argc, char *argv[])
+{
+   if (argc != 2) {
+       printf("\nUsage: <exefile> <inputfile>\n");
+       exit(0);
+   }
+   yyin = fopen(argv[1], "r");
+  yyparse();
+}
+
+
+int yyerror(char *s){
+  printf("\n\nError: %s\n", s);
+}
 

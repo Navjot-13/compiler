@@ -20,17 +20,17 @@ int yyerror(char *);
 %token <str_val> STR_CONST
 %%
 
-program:            func_list BGN statements {printf("Yes\n");}; 
+program:            func_list BGN statements {printf("No problem\n");}; 
 
 /*----------------Function Declaration ----------------------*/
-func_list:          func_list function |  ;
+func_list:          func_list function|  ;
 
 function:           data_type ID '(' params ')' statements;
 
-params:             param_list 
+params:             param_list
                     | ;
 
-param_list:         param_list param_type 
+param_list:         param_list',' param_type 
                     | param_type;
 
 param_type:         data_type ID;
@@ -54,7 +54,7 @@ stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressio
 
 assign_stmt:        data_type L SCOL;
 
-L:                  L',' ID | ID {printf("here\n");};
+L:                  L',' ID | ID;
 
 array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
 
@@ -75,7 +75,7 @@ variable:           ID
                     | arr_variable;
 
 arr_variable:       ID'['expr']'
-                    | arr_variable '['expr ']';
+                    | arr_variable '['expr']';
 
 cond_or_stmt:       cond_or_stmt OR cond_and_stmt
                     | cond_and_stmt;
@@ -137,6 +137,6 @@ int main(int argc, char *argv[])
 
 
 int yyerror(char *s){
-  printf("\n\nError: %s\n", s);
+  printf("Error: %s\n", s);
 }
 

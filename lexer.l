@@ -26,7 +26,7 @@ letter_ [A-Za-z_]
 
 ","				                return ',';
 
-";"				                return ';';
+";"				                return SCOL;
 
 "<"                             return '<';
 

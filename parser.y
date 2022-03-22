@@ -20,7 +20,7 @@ int yyerror(char *);
 %token <str_val> STR_CONST
 %%
 
-program:            func_list BGN statements;
+program:            func_list BGN statements {printf("Yes\n");}; 
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function |  ;
@@ -54,7 +54,7 @@ stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressio
 
 assign_stmt:        data_type L SCOL;
 
-L:                  L',' ID | ID;
+L:                  L',' ID | ID {printf("here\n");};
 
 array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
 

@@ -5,4 +5,4 @@ lex.yy.c: lexer.l
 y.tab.c: parser.y
 	yacc -v -d parser.y
 clean:
-	rm -f parser y.tab.c lex.yy.c y.tab.h y.output
+	rm -f parser y.tab.c lex.yy.c y.tab.h y.output compiler

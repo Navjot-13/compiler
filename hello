@@ -3,7 +3,11 @@ begin {
     a=5;
     if (a < 5) {
         b = 6;
+        c = 8;
+    
     }
     array <int, 6> v;
     arr[5][6] = 6;
+
+    ifloop (a < 5) a = 5;
 }

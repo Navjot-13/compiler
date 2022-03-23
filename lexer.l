@@ -28,6 +28,8 @@ letter_ [A-Za-z_]
 
 ";"				                return SCOL;
 
+"@"                             return INP;
+
 "<"                             return '<';
 
 ">"                             return '>';

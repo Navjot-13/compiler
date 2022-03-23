@@ -110,13 +110,13 @@ unary_op_stmt:      NOT unary_op_stmt
                     | constant;
 
 
-cond_stmt:          IF '(' expr ')' '{'statements'}' cond_stmt2;
+cond_stmt:          IF '(' expr ')' '{'stmt_list'}' cond_stmt2;
 
 cond_stmt2:         ELSE stmt | ;
 
 
 
-loop_stmt:          LP '(' expr ')' '{' statements '}';
+loop_stmt:          LP '(' expr ')' statements;
 
 
 data_type:          INT | DCML | STR | BOOL;

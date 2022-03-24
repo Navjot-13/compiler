@@ -5,6 +5,39 @@
 extern FILE * yyin;
 int yylex();
 int yyerror(char *);
+
+const int INT_TYPE = 0;
+const int DOUBLE_TYPE = 1;
+const int STR_TYPE = 2;
+const int BOOL_TYPE = 3;
+
+typedef struct Symbol{
+        char *name;
+        int type;
+} Symbol;
+
+typedef struct SymbolTable{
+        Symbol symbol;  
+        struct SymbolTable *next;
+} SymbolTable;
+SymbolTable *symbolTable;
+
+
+void addType (Symbol new_symbol){
+        if(symbolTable == NULL){
+                symbolTable = (SymbolTable*) malloc(sizeof(SymbolTable));
+                symbolTable->next = NULL;
+                symbolTable->symbol = new_symbol;
+        }
+        SymbolTable* cur_node = symbolTable;
+        while(cur_node->next != NULL){
+                cur_node = cur_node->next;
+        }
+        cur_node->next = (SymbolTable*) malloc(sizeof(SymbolTable));
+        cur_node->next->next = NULL;
+        cur_node->next->symbol = new_symbol;
+}
+
 %}
 
 %union {
@@ -15,9 +48,11 @@ int yyerror(char *);
 
 
 %token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
-%token <int_val> INT_CONST
+%token <int_val> INT_CONST 
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST
+
+%type<int_val> data_type L arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt
 %%
 
 program:            func_list BGN statements {printf("No problem\n");}; 
@@ -52,9 +87,12 @@ stmt_list:          stmt_list stmt | stmt;
 stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressions;
 
 
-assign_stmt:        data_type L SCOL;
+assign_stmt:        data_type  L SCOL;
 
-L:                  L',' ID | ID;
+L:                  L ',' ID 
+                    | ID
+                    {}
+                    ;
 
 array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
 
@@ -96,12 +134,34 @@ comp_op:            '>'
                     | LEQ;
 
 arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2
-                    | arithmetic_stmt1 SUB arithmetic_stmt2
-                    | arithmetic_stmt2;
+                        {
+                                $$ = $1 + $3;
+                        }
+                    | 
+                    arithmetic_stmt1 SUB arithmetic_stmt2
+                        {
+                                $$ = $1 - $3;
+                        }
+                    | 
+                    arithmetic_stmt2
+                        {
+                                $$ = $1;
+                        }
+                    ;
 
 arithmetic_stmt2:   arithmetic_stmt2 MUL unary_op_stmt
+                        {
+                                $$ = $1 * $3;
+                        }
                     | arithmetic_stmt2 DIV unary_op_stmt
-                    | unary_op_stmt;
+                        {
+                                $$ = $1 / $3;
+                        }
+                    | unary_op_stmt
+                        {
+                                $$ = $1;
+                        }
+                    ;
 
 unary_op_stmt:      NOT unary_op_stmt
                     | ADD unary_op_stmt
@@ -119,7 +179,20 @@ cond_stmt2:         ELSE stmt | ;
 loop_stmt:          LP '(' expr ')' statements;
 
 
-data_type:          INT | DCML | STR | BOOL;
+data_type:          INT {
+                                                $$ = INT_TYPE;
+                        }
+                        | 
+                        DCML{
+                                                $$ = DOUBLE_TYPE;
+                        }
+                        
+                        | STR {
+                                                $$ = STR_TYPE;
+                        }
+                        | BOOL {
+                                                $$ = BOOL_TYPE;
+                        };
 constant:           INT_CONST | DCML_CONST | STR_CONST;
 /*------------------------------------------------------------*/
 
@@ -132,7 +205,8 @@ int main(int argc, char *argv[])
        exit(0);
    }
    yyin = fopen(argv[1], "r");
-  yyparse();
+   symbolTable = NULL;
+   yyparse();
 }
 
 

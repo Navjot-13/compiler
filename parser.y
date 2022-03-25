@@ -12,6 +12,7 @@ const int DOUBLE_TYPE = 1;
 const int STR_TYPE = 2;
 const int BOOL_TYPE = 3;
 
+// Stores the type of one variable
 typedef struct Symbol{
         char *name;
         int type;
@@ -20,12 +21,13 @@ typedef struct Symbol{
 } Symbol;
 Symbol* stack;
 
+// Stores symbols for a particular scope
 typedef struct SymbolTable{
         Symbol *symbol_head;
         struct SymbolTable *next;
         struct SymbolTable *prev;
 } SymbolTable;
-SymbolTable *symbol_table;
+SymbolTable *symbol_table; // Symbol table for current scope
 
 Symbol* symbol_init(char *name,int type,Symbol *prev,Symbol *next){
         Symbol* new_symbol = (Symbol*) malloc(sizeof(Symbol));
@@ -134,9 +136,6 @@ AST* Ast_new(char *op, AST* left, AST* right){
         return ast;
 }
 
-void addType (Symbol new_symbol){
-
-}
 
 %}
 

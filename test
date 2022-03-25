@@ -1,6 +1,7 @@
 begin {
     int a;
-    a = 5-4+3;
-
-    string s;
+    a=4;
+    if (a+=5) {
+        a = 5;
+    }
 }

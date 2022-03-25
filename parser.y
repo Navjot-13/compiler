@@ -15,13 +15,38 @@ const int BOOL_TYPE = 3;
 typedef struct Symbol{
         char *name;
         int type;
+        struct Symbol *prev;
+        struct Symbol *next;
 } Symbol;
 
 typedef struct SymbolTable{
-        Symbol symbolNode;  
+        Symbol *symbol_head;
         struct SymbolTable *next;
+        struct SymbolTable *prev;
 } SymbolTable;
 SymbolTable *symbolTable;
+
+Symbol* symbol_init(char *name,int type,Symbol *prev,Symbol *next){
+        Symbol* new_symbol = (Symbol*) malloc(sizeof(Symbol));
+        new_symbol->name = malloc(strlen(name) * sizeof(char));
+        new_symbol->type = type;
+        new_symbol->prev = prev;
+        new_symbol->next = next;
+        return new_symbol;
+}
+
+SymbolTable* pushSymbol(SymbolTable* symbol_table,Symbol* symbol){
+        if(symbol_table->symbol_head == NULL){
+                symbol_table->symbol_head = symbol_init(symbol->name,symbol->type,NULL,NULL);
+                return symbol_table;
+        }
+        Symbol* cur_symbol = symbol_table->symbol_head;
+        while(cur_symbol->next != NULL){
+                cur_symbol = cur_symbol->next;
+        }
+        cur_symbol->next = symbol_init(symbol->name,symbol->type,cur_symbol,NULL);
+        return symbol_table;
+}
 
 typedef struct AST{
         char *op;
@@ -36,6 +61,7 @@ typedef struct AST{
         bool is_array_stmt;
         bool is_condition_stmt;
         bool is_expression_stmt;
+        int datatype;
         union {
                 int int_val;
                 double double_val;
@@ -48,7 +74,7 @@ typedef struct AST{
 
 AST* Ast_new(char *op, AST* left, AST* right){
         AST* ast = (AST *)malloc(sizeof(AST));
-        ast->op = (char*)malloc(300*sizeof(char));
+        ast->op = (char*)malloc(strlen(op)*sizeof(char));
         strcpy(ast->op,op);
         ast->left = left;
         ast->right = right;
@@ -61,22 +87,12 @@ AST* Ast_new(char *op, AST* left, AST* right){
         ast->is_loop_stmt = false;
         ast->is_array_stmt = false;
         ast->is_condition_stmt = false;
+        ast->datatype = -1;
         return ast;
 }
 
 void addType (Symbol new_symbol){
-        if(symbolTable == NULL){
-                symbolTable = (SymbolTable*) malloc(sizeof(SymbolTable));
-                symbolTable->next = NULL;
-                symbolTable->symbolNode = new_symbol;
-        }
-        SymbolTable* cur_node = symbolTable;
-        while(cur_node->next != NULL){
-                cur_node = cur_node->next;
-        }
-        cur_node->next = (SymbolTable*) malloc(sizeof(SymbolTable));
-        cur_node->next->next = NULL;
-        cur_node->next->symbolNode = new_symbol;
+
 }
 
 %}
@@ -177,6 +193,8 @@ stmt:               assign_stmt {
 
 assign_stmt:        data_type L SCOL {
                                 $$ = (AST*) malloc(sizeof(AST));
+                                $$ = Ast_new("NA",NULL,NULL);
+                                $$->datatype = $1;
                         };
 
 L:                  L ',' ID 
@@ -192,6 +210,7 @@ X:                  ARR '<' X ',' INT_CONST '>' | data_type;
 
 
 expressions:        expr SCOL {
+
                                 $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                                 $$->is_expressions = true;
@@ -414,7 +433,10 @@ int main(int argc, char *argv[])
        exit(0);
    }
    yyin = fopen(argv[1], "r");
-   symbolTable = NULL;
+   symbolTable = (SymbolTable*)malloc(sizeof(SymbolTable));
+   symbolTable->prev = NULL;
+   symbolTable->next = NULL;
+   symbolTable->symbol_head = NULL;
    yyparse();
 }
 

@@ -100,9 +100,9 @@ letter_ [A-Za-z_]
 
 "\".*\"" | "\'.*\'"             { return STR_CONST; }
 
-"-"?{digit}+                    { return INT_CONST; }
+{digit}+                        { return INT_CONST; }
 
-"-"?{digit}+"."{digit}+         { return DCML_CONST; }
+{digit}+"."{digit}+             { return DCML_CONST; }
 
 {letter_}({letter_}|{digit})*   { return ID; }
 

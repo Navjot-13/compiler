@@ -46,8 +46,9 @@ typedef struct AST{
 
 } AST;
 
-AST* Ast_new(char *op,AST* left,AST* right){
-        AST* ast = malloc(sizeof(AST));
+AST* Ast_new(char *op, AST* left, AST* right){
+        AST* ast = (AST *)malloc(sizeof(AST));
+        ast->op = (char*)malloc(300*sizeof(char));
         strcpy(ast->op,op);
         ast->left = left;
         ast->right = right;
@@ -98,7 +99,7 @@ void addType (Symbol new_symbol){
 expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt comp_op arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt variable constant loop_stmt
 %%
 
-program:            func_list  BGN {printf("re\n");}statements {printf("No problem\n");}; 
+program:            func_list  BGN statements {printf("No problem\n");}; 
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function|  ;
@@ -174,9 +175,8 @@ stmt:               assign_stmt {
                     ;
 
 
-assign_stmt:        data_type {printf("hello\n");} L SCOL {
+assign_stmt:        data_type L SCOL {
                                 $$ = (AST*) malloc(sizeof(AST));
-                                printf("reached\n");
                         };
 
 L:                  L ',' ID 
@@ -374,8 +374,7 @@ loop_stmt:          LP '(' expr ')' statements {
 
 
 data_type:          INT {
-                                $$ = INT_TYPE;                        
-                                printf("hellooo\n");
+                                $$ = INT_TYPE;
                         }
                         | 
                         DCML{

@@ -125,11 +125,13 @@ assign_stmt:        data_type L SCOL {
                         };
 
 L:                  L ',' ID {
+                                $$ = (Symbol *) malloc(sizeof(Symbol));
                                 $$ = symbol_init($1->name,-1,NULL,NULL);
                                 push($$);
                         }
                     | 
                     ID      {
+                                $$ = (Symbol *) malloc(sizeof(Symbol));
                                 $$ = symbol_init($1,-1,NULL,NULL);
                                 push($$);
                         }

@@ -61,8 +61,10 @@ Symbol* search_symbol(char* id) {
 
 // Stack functions
 void push(Symbol* symbol) {
+    char *name = (char*)malloc(strlen(symbol->name)*sizeof(char));
+    strcpy(name, symbol->name);
     if (stack == NULL) {
-        stack = symbol_init(symbol->name, symbol->type, NULL, NULL);
+        stack = symbol_init(name, symbol->type, NULL, NULL);
     } else {
         // I changed function check once
         Symbol* cur_symbol = stack;

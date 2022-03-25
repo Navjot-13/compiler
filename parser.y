@@ -93,12 +93,12 @@ void addType (Symbol new_symbol){
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST
 
-%type<int_val> data_type L
-%type<ast> statements stmt_list stmt assign_stmt cond_stmt array_decl
+%type<int_val> data_type
+%type<ast> statements stmt_list stmt assign_stmt cond_stmt array_decl L
 expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt comp_op arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt variable constant loop_stmt
 %%
 
-program:            func_list BGN statements {printf("No problem\n");}; 
+program:            func_list  BGN {printf("re\n");}statements {printf("No problem\n");}; 
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function|  ;
@@ -124,41 +124,50 @@ arg_list:           arg_list',' expr
 
 /*------------------Statement Declaration---------------------*/
 statements:         '{' stmt_list '}' {
+                               $$ = (AST*) malloc(sizeof(AST));
                                $$ = Ast_new("NA",$2,NULL); 
                         } 
                     | 
                     stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,NULL);
                         }
                     ;
 
 stmt_list:          stmt_list stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,$2);
                                 $$->is_stmt_list = true;
                         }
                     |   {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",NULL,NULL);
                                 $$->is_stmt_list = true;
                         }
                     ;
 
 stmt:               assign_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,NULL);
                                 $$->is_assign_stmt = true;
                         }
                     | cond_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,NULL);
                                 $$->is_cond_stmt = true;
                         } 
                     | loop_stmt{
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,NULL);
                                 $$->is_loop_stmt = true;
                         } 
                     | array_decl{
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,NULL);
                                 $$->is_array_stmt = true;
                         } 
                     | expressions {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",$1,NULL);
                                 $$->is_expression_stmt = true;
                         }
@@ -166,12 +175,14 @@ stmt:               assign_stmt {
 
 
 assign_stmt:        data_type  L SCOL {
+                                printf("reached\n");
+                                $$ = (AST*) malloc(sizeof(AST));
                         };
 
 L:                  L ',' ID 
                     | 
                     ID {
-                        
+                                $$ = (AST*) malloc(sizeof(AST));
                     }
                     ;
 
@@ -181,129 +192,162 @@ X:                  ARR '<' X ',' INT_CONST '>' | data_type;
 
 
 expressions:        expr SCOL {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                                 $$->is_expressions = true;
                         }
                     ;
 
 expr:               variable ASSIGN expr {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("=",$1,$3);
                         }
                     | variable AEQ expr {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("+=",$1,$3);
                         }
                     | variable SEQ expr {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("-=",$1,$3);
                         }
                     | variable MEQ expr {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("*=",$1,$3);
                         }
                     | variable DEQ expr {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("/=",$1,$3);
                         }
                     | variable INCR {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("++",$1,NULL);
                                 $$->is_unary = true;
                         }
                     | variable DECR {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("--",$1,NULL);
                                 $$->is_unary = true;
                         }
                     | cond_or_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
                     ;
 
 cond_or_stmt:       cond_or_stmt OR cond_and_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("or",$1,$3);
                         }
                     | cond_and_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
                     ;
 
 cond_and_stmt:      cond_and_stmt AND eql_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("and",$1,$3);
                         }
                     | eql_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
                     ;
 
 eql_stmt:           eql_stmt EQ comp_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("==",$1,$3);
                         }
                     | eql_stmt NEQ comp_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("!=",$1,$3);
                         }
                     | comp_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
                     ;
 
 comp_stmt:          comp_stmt comp_op arithmetic_stmt1 {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new($2->op,$1,$3);
                         }
                     | arithmetic_stmt1 {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                     }
                     ;
 
 comp_op:            '>'     {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new(">",NULL,NULL);
                                 $$->is_leaf = true;
                         }
                     | '<'  {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("<",NULL,NULL);
                                 $$->is_leaf = true;
                         }
                     | GEQ  {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new(">=",NULL,NULL);
                                 $$->is_leaf = true;
                         }
                     | LEQ  {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("<=",NULL,NULL);
                                 $$->is_leaf = true;
                         }
                     ;
 
 arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2 {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("+",$1,$3);
                         }
                     | 
                     arithmetic_stmt1 SUB arithmetic_stmt2 {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("-",$1,$3);
                         }
                     | 
                     arithmetic_stmt2 {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
                     ;
 
 arithmetic_stmt2:   arithmetic_stmt2 MUL unary_op_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("*",$1,$3);
                         }
                     | arithmetic_stmt2 DIV unary_op_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("/",$1,$3);
                         }
                     | unary_op_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
                     ;
 
 unary_op_stmt:      NOT unary_op_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("!",$2,NULL);
                         }
                     | ADD unary_op_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("+",$2,NULL);
                         }
                     | SUB unary_op_stmt {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("-",$2,NULL);
                         }
                     | variable {
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         }
-                    | constant {
+                    | constant {    
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = $1;
                         };
 
@@ -322,25 +366,27 @@ cond_stmt2:         ELSE stmt | ;
 
 
 
-loop_stmt:          LP '(' expr ')' statements {
+loop_stmt:          LP '(' expr ')' statements {    
+                                $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("ifLoop",$3,$5);
                         }
                     ;
 
 
 data_type:          INT {
-                                                
+                                printf("reached\n");
+                                //$$ = INT_TYPE;                        
                         }
                         | 
                         DCML{
-                                                $$ = DOUBLE_TYPE;
+                                $$ = DOUBLE_TYPE;
                         }
                         
                         | STR {
-                                                $$ = STR_TYPE;
+                                $$ = STR_TYPE;
                         }
                         | BOOL {
-                                                $$ = BOOL_TYPE;
+                                $$ = BOOL_TYPE;
                         };
 constant:           INT_CONST {
                                 $$ = (AST*) malloc(sizeof(AST));
@@ -377,4 +423,3 @@ int main(int argc, char *argv[])
 int yyerror(char *s){
   printf("Error: %s\n", s);
 }
-

@@ -18,7 +18,7 @@ typedef struct Symbol{
 } Symbol;
 
 typedef struct SymbolTable{
-        Symbol symbol;  
+        Symbol symbolNode;  
         struct SymbolTable *next;
 } SymbolTable;
 SymbolTable *symbolTable;
@@ -30,6 +30,12 @@ typedef struct AST{
         bool is_array;
         bool is_expressions;
         bool is_stmt_list;
+        bool is_assign_stmt;
+        bool is_cond_stmt;
+        bool is_loop_stmt;
+        bool is_array_stmt;
+        bool is_condition_stmt;
+        bool is_expression_stmt;
         union {
                 int int_val;
                 double double_val;
@@ -49,6 +55,11 @@ AST* Ast_new(char *op,AST* left,AST* right){
         ast->is_leaf = false;
         ast->is_expressions = false;
         ast->is_stmt_list = false;
+        ast->is_assign_stmt = false;
+        ast->is_cond_stmt = false;
+        ast->is_loop_stmt = false;
+        ast->is_array_stmt = false;
+        ast->is_condition_stmt = false;
         return ast;
 }
 
@@ -56,7 +67,7 @@ void addType (Symbol new_symbol){
         if(symbolTable == NULL){
                 symbolTable = (SymbolTable*) malloc(sizeof(SymbolTable));
                 symbolTable->next = NULL;
-                symbolTable->symbol = new_symbol;
+                symbolTable->symbolNode = new_symbol;
         }
         SymbolTable* cur_node = symbolTable;
         while(cur_node->next != NULL){
@@ -64,7 +75,7 @@ void addType (Symbol new_symbol){
         }
         cur_node->next = (SymbolTable*) malloc(sizeof(SymbolTable));
         cur_node->next->next = NULL;
-        cur_node->next->symbol = new_symbol;
+        cur_node->next->symbolNode = new_symbol;
 }
 
 %}
@@ -83,7 +94,7 @@ void addType (Symbol new_symbol){
 %token <str_val> STR_CONST
 
 %type<int_val> data_type L
-%type<ast> statements stmt_list stmt
+%type<ast> statements stmt_list stmt assign_stmt cond_stmt array_decl
 expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt comp_op arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt variable constant loop_stmt
 %%
 
@@ -113,11 +124,11 @@ arg_list:           arg_list',' expr
 
 /*------------------Statement Declaration---------------------*/
 statements:         '{' stmt_list '}' {
-                                
+                               $$ = Ast_new("NA",$2,NULL); 
                         } 
                     | 
                     stmt {
-
+                                $$ = Ast_new("NA",$1,NULL);
                         }
                     ;
 
@@ -131,10 +142,31 @@ stmt_list:          stmt_list stmt {
                         }
                     ;
 
-stmt:               assign_stmt {}| cond_stmt{} | loop_stmt{} | array_decl{} | expressions {};
+stmt:               assign_stmt {
+                                $$ = Ast_new("NA",$1,NULL);
+                                $$->is_assign_stmt = true;
+                        }
+                    | cond_stmt {
+                                $$ = Ast_new("NA",$1,NULL);
+                                $$->is_cond_stmt = true;
+                        } 
+                    | loop_stmt{
+                                $$ = Ast_new("NA",$1,NULL);
+                                $$->is_loop_stmt = true;
+                        } 
+                    | array_decl{
+                                $$ = Ast_new("NA",$1,NULL);
+                                $$->is_array_stmt = true;
+                        } 
+                    | expressions {
+                                $$ = Ast_new("NA",$1,NULL);
+                                $$->is_expression_stmt = true;
+                        }
+                    ;
 
 
-assign_stmt:        data_type  L SCOL;
+assign_stmt:        data_type  L SCOL {
+                        };
 
 L:                  L ',' ID 
                     | 
@@ -143,7 +175,8 @@ L:                  L ',' ID
                     }
                     ;
 
-array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL
+array_decl:         ARR '<' X ',' INT_CONST'>' ID SCOL{};
+X:                  ARR '<' X ',' INT_CONST '>' | data_type;
                     ;
 
 
@@ -169,11 +202,11 @@ expr:               variable ASSIGN expr {
                                 $$ = Ast_new("/=",$1,$3);
                         }
                     | variable INCR {
-                                $$ = Ast_new("++",NULL,$1);
+                                $$ = Ast_new("++",$1,NULL);
                                 $$->is_unary = true;
                         }
                     | variable DECR {
-                                $$ = Ast_new("--",NULL,$1);
+                                $$ = Ast_new("--",$1,NULL);
                                 $$->is_unary = true;
                         }
                     | cond_or_stmt {
@@ -259,13 +292,13 @@ arithmetic_stmt2:   arithmetic_stmt2 MUL unary_op_stmt {
                     ;
 
 unary_op_stmt:      NOT unary_op_stmt {
-                                $$ = Ast_new("!",NULL,$2);
+                                $$ = Ast_new("!",$2,NULL);
                         }
                     | ADD unary_op_stmt {
-                                $$ = Ast_new("+",NULL,$2);
+                                $$ = Ast_new("+",$2,NULL);
                         }
                     | SUB unary_op_stmt {
-                                $$ = Ast_new("-",NULL,$2);
+                                $$ = Ast_new("-",$2,NULL);
                         }
                     | variable {
                                 $$ = $1;
@@ -283,7 +316,7 @@ arr_variable:       ID'['expr']'
                     | arr_variable '['expr']';
 
 
-cond_stmt:          IF '(' expr ')' '{'stmt_list'}' cond_stmt2;
+cond_stmt:          IF '(' expr ')' '{'stmt_list'}' cond_stmt2 {};
 
 cond_stmt2:         ELSE stmt | ;
 
@@ -296,7 +329,7 @@ loop_stmt:          LP '(' expr ')' statements {
 
 
 data_type:          INT {
-                                                $$ = INT_TYPE;
+                                                
                         }
                         | 
                         DCML{

@@ -101,7 +101,7 @@ letter_ [A-Za-z_]
 
 "\".*\"" | "\'.*\'"             { strcpy(yylval.str_val, yytext); return STR_CONST; }
 
-{digit}+                        { return INT_CONST; }
+{digit}+                        { yylval.int_val = atoi(yytext); return INT_CONST; }
 
 {digit}+"."{digit}+             { return DCML_CONST; }
 

@@ -1,6 +1,10 @@
 #ifndef SYMBOL_H_NAME
 #define SYMBOL_H_NAME
 
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
 // Stores the type of one variable
 typedef struct Symbol {
     char* name;

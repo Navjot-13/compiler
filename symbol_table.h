@@ -22,7 +22,8 @@ SymbolTable* symbol_table;  // Symbol table for current scope
 
 Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     Symbol* new_symbol = (Symbol*)malloc(sizeof(Symbol));
-    new_symbol->name = malloc(strlen(name) * sizeof(char));
+    new_symbol->name = (char*)malloc(strlen(name) * sizeof(char));
+    new_symbol->name = name;
     new_symbol->type = type;
     new_symbol->prev = prev;
     new_symbol->next = next;
@@ -32,10 +33,13 @@ Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
 void push_symbol(Symbol* symbol) {
     if (symbol_table->symbol_head == NULL) {
         symbol_table->symbol_head = symbol_init(symbol->name, symbol->type, NULL, NULL);
-    }
-    Symbol* cur_symbol = symbol_table->symbol_head;
-    while (cur_symbol->next != NULL) {
-        cur_symbol = cur_symbol->next;
+    } else {
+        // I changed function check once
+        Symbol* cur_symbol = symbol_table->symbol_head;
+        while (cur_symbol->next != NULL) {
+            cur_symbol = cur_symbol->next;
+        }
+        cur_symbol->next = symbol_init(symbol->name, symbol->type, NULL, NULL);
     }
 }
 
@@ -55,15 +59,18 @@ Symbol* search_symbol(char* id) {
     return NULL;
 }
 
+// Stack functions
 void push(Symbol* symbol) {
     if (stack == NULL) {
         stack = symbol_init(symbol->name, symbol->type, NULL, NULL);
+    } else {
+        // I changed function check once
+        Symbol* cur_symbol = stack;
+        while (cur_symbol->next != NULL) {
+            cur_symbol = cur_symbol->next;
+        }
+        cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
     }
-    Symbol* cur_symbol = stack;
-    while (cur_symbol->next != NULL) {
-        cur_symbol = cur_symbol->next;
-    }
-    cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
 }
 
 Symbol* pop() {

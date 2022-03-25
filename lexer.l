@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "y.tab.h"
 %}
 
@@ -98,13 +99,13 @@ letter_ [A-Za-z_]
 
 "#\*(\*(?!#)|[^*])*\*#"         { return MLTI_CMNT; }
 
-"\".*\"" | "\'.*\'"             { return STR_CONST; }
+"\".*\"" | "\'.*\'"             { strcpy(yylval.str_val, yytext); return STR_CONST; }
 
 {digit}+                        { return INT_CONST; }
 
 {digit}+"."{digit}+             { return DCML_CONST; }
 
-{letter_}({letter_}|{digit})*   { return ID; }
+{letter_}({letter_}|{digit})*   { strcpy(yylval.str_val, yytext); return ID; }
 
 .
 

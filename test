@@ -1,3 +1,6 @@
 begin {
     int a;
+    a = 5-4+3;
+
+    string s;
 }

@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include<stdbool.h>
 extern FILE * yyin;
 int yylex();
 int yyerror(char *);
@@ -22,6 +23,34 @@ typedef struct SymbolTable{
 } SymbolTable;
 SymbolTable *symbolTable;
 
+typedef struct AST{
+        char *op;
+        bool is_unary;
+        bool is_leaf;
+        bool is_array;
+        bool is_expressions;
+        bool is_stmt_list;
+        union {
+                int int_val;
+                double double_val;
+                char str_val[300];
+        } val;
+        struct AST *left;
+        struct AST *right;
+
+} AST;
+
+AST* Ast_new(char *op,AST* left,AST* right){
+        AST* ast = malloc(sizeof(AST));
+        strcpy(ast->op,op);
+        ast->left = left;
+        ast->right = right;
+        ast->is_unary = false;
+        ast->is_leaf = false;
+        ast->is_expressions = false;
+        ast->is_stmt_list = false;
+        return ast;
+}
 
 void addType (Symbol new_symbol){
         if(symbolTable == NULL){
@@ -44,6 +73,7 @@ void addType (Symbol new_symbol){
   int int_val;
   double double_val;
   char str_val[300];
+  struct AST *ast;
 }
 
 
@@ -52,7 +82,9 @@ void addType (Symbol new_symbol){
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST
 
-%type<int_val> data_type L arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt
+%type<int_val> data_type L
+%type<ast> statements stmt_list stmt
+expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt comp_op arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt variable constant loop_stmt
 %%
 
 program:            func_list BGN statements {printf("No problem\n");}; 
@@ -80,94 +112,175 @@ arg_list:           arg_list',' expr
 
 
 /*------------------Statement Declaration---------------------*/
-statements:         '{' stmt_list '}' | stmt;
+statements:         '{' stmt_list '}' {
+                                
+                        } 
+                    | 
+                    stmt {
 
-stmt_list:          stmt_list stmt | stmt;
+                        }
+                    ;
 
-stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressions;
+stmt_list:          stmt_list stmt {
+                                $$ = Ast_new("NA",$1,$2);
+                                $$->is_stmt_list = true;
+                        }
+                    |   {
+                                $$ = Ast_new("NA",NULL,NULL);
+                                $$->is_stmt_list = true;
+                        }
+                    ;
+
+stmt:               assign_stmt {}| cond_stmt{} | loop_stmt{} | array_decl{} | expressions {};
 
 
 assign_stmt:        data_type  L SCOL;
 
 L:                  L ',' ID 
-                    | ID
-                    {}
+                    | 
+                    ID {
+                        
+                    }
                     ;
 
-array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
+array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL
+                    ;
 
 
-expressions:        expr SCOL;
+expressions:        expr SCOL {
+                                $$ = $1;
+                                $$->is_expressions = true;
+                        }
+                    ;
 
-expr:               variable ASSIGN expr
-                    | variable AEQ expr
-                    | variable SEQ expr
-                    | variable MEQ expr
-                    | variable DEQ expr
-                    | variable INCR
-                    | variable DECR
-                    | cond_or_stmt;
+expr:               variable ASSIGN expr {
+                                $$ = Ast_new("=",$1,$3);
+                        }
+                    | variable AEQ expr {
+                                $$ = Ast_new("+=",$1,$3);
+                        }
+                    | variable SEQ expr {
+                                $$ = Ast_new("-=",$1,$3);
+                        }
+                    | variable MEQ expr {
+                                $$ = Ast_new("*=",$1,$3);
+                        }
+                    | variable DEQ expr {
+                                $$ = Ast_new("/=",$1,$3);
+                        }
+                    | variable INCR {
+                                $$ = Ast_new("++",NULL,$1);
+                                $$->is_unary = true;
+                        }
+                    | variable DECR {
+                                $$ = Ast_new("--",NULL,$1);
+                                $$->is_unary = true;
+                        }
+                    | cond_or_stmt {
+                                $$ = $1;
+                        }
+                    ;
 
-variable:           ID
-                    | ID '(' args ')'
-                    | arr_variable;
+cond_or_stmt:       cond_or_stmt OR cond_and_stmt {
+                                $$ = Ast_new("or",$1,$3);
+                        }
+                    | cond_and_stmt {
+                                $$ = $1;
+                        }
+                    ;
+
+cond_and_stmt:      cond_and_stmt AND eql_stmt {
+                                $$ = Ast_new("and",$1,$3);
+                        }
+                    | eql_stmt {
+                                $$ = $1;
+                        }
+                    ;
+
+eql_stmt:           eql_stmt EQ comp_stmt {
+                                $$ = Ast_new("==",$1,$3);
+                        }
+                    | eql_stmt NEQ comp_stmt {
+                                $$ = Ast_new("!=",$1,$3);
+                        }
+                    | comp_stmt {
+                                $$ = $1;
+                        }
+                    ;
+
+comp_stmt:          comp_stmt comp_op arithmetic_stmt1 {
+                                $$ = Ast_new($2->op,$1,$3);
+                        }
+                    | arithmetic_stmt1 {
+                                $$ = $1;
+                    }
+                    ;
+
+comp_op:            '>'     {
+                                $$ = Ast_new(">",NULL,NULL);
+                                $$->is_leaf = true;
+                        }
+                    | '<'  {
+                                $$ = Ast_new("<",NULL,NULL);
+                                $$->is_leaf = true;
+                        }
+                    | GEQ  {
+                                $$ = Ast_new(">=",NULL,NULL);
+                                $$->is_leaf = true;
+                        }
+                    | LEQ  {
+                                $$ = Ast_new("<=",NULL,NULL);
+                                $$->is_leaf = true;
+                        }
+                    ;
+
+arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2 {
+                                $$ = Ast_new("+",$1,$3);
+                        }
+                    | 
+                    arithmetic_stmt1 SUB arithmetic_stmt2 {
+                                $$ = Ast_new("-",$1,$3);
+                        }
+                    | 
+                    arithmetic_stmt2 {
+                                $$ = $1;
+                        }
+                    ;
+
+arithmetic_stmt2:   arithmetic_stmt2 MUL unary_op_stmt {
+                                $$ = Ast_new("*",$1,$3);
+                        }
+                    | arithmetic_stmt2 DIV unary_op_stmt {
+                                $$ = Ast_new("/",$1,$3);
+                        }
+                    | unary_op_stmt {
+                                $$ = $1;
+                        }
+                    ;
+
+unary_op_stmt:      NOT unary_op_stmt {
+                                $$ = Ast_new("!",NULL,$2);
+                        }
+                    | ADD unary_op_stmt {
+                                $$ = Ast_new("+",NULL,$2);
+                        }
+                    | SUB unary_op_stmt {
+                                $$ = Ast_new("-",NULL,$2);
+                        }
+                    | variable {
+                                $$ = $1;
+                        }
+                    | constant {
+                                $$ = $1;
+                        };
+
+variable:           ID {}
+                    | ID '(' args ')' {}
+                    | arr_variable {}
+                    ;
 
 arr_variable:       ID'['expr']'
                     | arr_variable '['expr']';
-
-cond_or_stmt:       cond_or_stmt OR cond_and_stmt
-                    | cond_and_stmt;
-
-cond_and_stmt:      cond_and_stmt AND eql_stmt
-                    | eql_stmt;
-
-eql_stmt:           eql_stmt EQ comp_stmt
-                    | eql_stmt NEQ comp_stmt
-                    | comp_stmt;
-
-comp_stmt:          comp_stmt comp_op arithmetic_stmt1
-                    | arithmetic_stmt1;
-
-comp_op:            '>'
-                    | '<'
-                    | GEQ
-                    | LEQ;
-
-arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2
-                        {
-                                $$ = $1 + $3;
-                        }
-                    | 
-                    arithmetic_stmt1 SUB arithmetic_stmt2
-                        {
-                                $$ = $1 - $3;
-                        }
-                    | 
-                    arithmetic_stmt2
-                        {
-                                $$ = $1;
-                        }
-                    ;
-
-arithmetic_stmt2:   arithmetic_stmt2 MUL unary_op_stmt
-                        {
-                                $$ = $1 * $3;
-                        }
-                    | arithmetic_stmt2 DIV unary_op_stmt
-                        {
-                                $$ = $1 / $3;
-                        }
-                    | unary_op_stmt
-                        {
-                                $$ = $1;
-                        }
-                    ;
-
-unary_op_stmt:      NOT unary_op_stmt
-                    | ADD unary_op_stmt
-                    | SUB unary_op_stmt
-                    | variable
-                    | constant;
 
 
 cond_stmt:          IF '(' expr ')' '{'stmt_list'}' cond_stmt2;
@@ -176,7 +289,10 @@ cond_stmt2:         ELSE stmt | ;
 
 
 
-loop_stmt:          LP '(' expr ')' statements;
+loop_stmt:          LP '(' expr ')' statements {
+                                $$ = Ast_new("ifLoop",$3,$5);
+                        }
+                    ;
 
 
 data_type:          INT {
@@ -193,7 +309,22 @@ data_type:          INT {
                         | BOOL {
                                                 $$ = BOOL_TYPE;
                         };
-constant:           INT_CONST | DCML_CONST | STR_CONST;
+constant:           INT_CONST {
+                                $$ = (AST*) malloc(sizeof(AST));
+                                $$->is_leaf = true;
+                                $$->val.int_val = $1;
+                        }
+                    | DCML_CONST {
+                                $$ = (AST*) malloc(sizeof(AST));
+                                $$->is_leaf = true;
+                                $$->val.double_val = $1;
+                        }
+                    | STR_CONST {
+                                $$ = (AST*) malloc(sizeof(AST));
+                                $$->is_leaf = true;
+                                strcpy($$->val.str_val,$1);
+                        }
+                    ;
 /*------------------------------------------------------------*/
 
 %%

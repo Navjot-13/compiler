@@ -139,7 +139,7 @@ stmt_list:          stmt_list stmt {
                                 $$ = Ast_new("NA",$1,$2);
                                 $$->is_stmt_list = true;
                         }
-                    |   {
+                    | stmt  {
                                 $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",NULL,NULL);
                                 $$->is_stmt_list = true;
@@ -174,9 +174,9 @@ stmt:               assign_stmt {
                     ;
 
 
-assign_stmt:        data_type  L SCOL {
-                                printf("reached\n");
+assign_stmt:        data_type {printf("hello\n");} L SCOL {
                                 $$ = (AST*) malloc(sizeof(AST));
+                                printf("reached\n");
                         };
 
 L:                  L ',' ID 
@@ -374,8 +374,8 @@ loop_stmt:          LP '(' expr ')' statements {
 
 
 data_type:          INT {
-                                printf("reached\n");
-                                //$$ = INT_TYPE;                        
+                                $$ = INT_TYPE;                        
+                                printf("hellooo\n");
                         }
                         | 
                         DCML{

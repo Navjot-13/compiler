@@ -18,13 +18,14 @@ typedef struct Symbol{
         struct Symbol *prev;
         struct Symbol *next;
 } Symbol;
+Symbol* stack;
 
 typedef struct SymbolTable{
         Symbol *symbol_head;
         struct SymbolTable *next;
         struct SymbolTable *prev;
 } SymbolTable;
-SymbolTable *symbolTable;
+SymbolTable *symbol_table;
 
 Symbol* symbol_init(char *name,int type,Symbol *prev,Symbol *next){
         Symbol* new_symbol = (Symbol*) malloc(sizeof(Symbol));
@@ -35,17 +36,59 @@ Symbol* symbol_init(char *name,int type,Symbol *prev,Symbol *next){
         return new_symbol;
 }
 
-SymbolTable* pushSymbol(SymbolTable* symbol_table,Symbol* symbol){
+void push_symbol(Symbol* symbol){
         if(symbol_table->symbol_head == NULL){
                 symbol_table->symbol_head = symbol_init(symbol->name,symbol->type,NULL,NULL);
-                return symbol_table;
         }
         Symbol* cur_symbol = symbol_table->symbol_head;
         while(cur_symbol->next != NULL){
                 cur_symbol = cur_symbol->next;
         }
+}
+
+Symbol* search_symbol(char* id){
+        Symbol* required = NULL;
+        SymbolTable *cur_symbol_table = symbol_table;
+        while(cur_symbol_table != NULL){
+                Symbol* cur_symbol = cur_symbol_table->symbol_head;
+                while(cur_symbol != NULL){
+                        if(strcmp(cur_symbol->name,id) == 0){
+                                return cur_symbol;
+                        }
+                        cur_symbol = cur_symbol->next;
+                }
+                cur_symbol_table = cur_symbol_table->prev;
+        }
+        return NULL;
+}
+
+void push(Symbol* symbol){
+        if(stack == NULL){
+                stack = symbol_init(symbol->name,symbol->type,NULL,NULL);
+        }
+        Symbol* cur_symbol = stack;
+        while(cur_symbol->next != NULL){
+                cur_symbol = cur_symbol->next;
+        }
         cur_symbol->next = symbol_init(symbol->name,symbol->type,cur_symbol,NULL);
-        return symbol_table;
+}
+
+Symbol* pop(){
+        if(stack == NULL){
+                printf("Stack is empty!!");
+                return NULL;
+        }
+        Symbol* cur_symbol = stack;
+        while(cur_symbol->next != NULL){
+                cur_symbol = cur_symbol->next;
+        }
+        if(cur_symbol->prev){
+                cur_symbol->prev->next = NULL;
+        }
+        else{
+                stack = NULL;
+        }
+        return cur_symbol;
 }
 
 typedef struct AST{
@@ -102,16 +145,17 @@ void addType (Symbol new_symbol){
   double double_val;
   char str_val[300];
   struct AST *ast;
+  struct Symbol *symbol;
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
 %token <int_val> INT_CONST 
 %token <double_val> DCML_CONST
-%token <str_val> STR_CONST
-
+%token <str_val> STR_CONST ID
 %type<int_val> data_type
-%type<ast> statements stmt_list stmt assign_stmt cond_stmt array_decl L
+%type<symbol> L
+%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl 
 expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt comp_op arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt variable constant loop_stmt
 %%
 
@@ -194,14 +238,24 @@ stmt:               assign_stmt {
 assign_stmt:        data_type L SCOL {
                                 $$ = (AST*) malloc(sizeof(AST));
                                 $$ = Ast_new("NA",NULL,NULL);
+                                $$->is_assign_stmt = true;
                                 $$->datatype = $1;
+                                while(stack != NULL){
+                                        Symbol* symbol = pop();
+                                        symbol->type = $$->datatype;
+                                        push_symbol(symbol);
+                                }
                         };
 
-L:                  L ',' ID 
+L:                  L ',' ID {
+                                $$ = symbol_init($1->name,-1,NULL,NULL);
+                                push($$);
+                        }
                     | 
-                    ID {
-                                $$ = (AST*) malloc(sizeof(AST));
-                    }
+                    ID      {
+                                $$ = symbol_init($1,-1,NULL,NULL);
+                                push($$);
+                        }
                     ;
 
 array_decl:         ARR '<' X ',' INT_CONST'>' ID SCOL{};
@@ -370,7 +424,13 @@ unary_op_stmt:      NOT unary_op_stmt {
                                 $$ = $1;
                         };
 
-variable:           ID {}
+variable:           ID      {
+                                Symbol* symbol = search_symbol($1);
+                                if(symbol == NULL){
+                                        printf("Identifier undeclared!!!\n");
+                                        return 0;
+                                }
+                        }
                     | ID '(' args ')' {}
                     | arr_variable {}
                     ;
@@ -433,10 +493,11 @@ int main(int argc, char *argv[])
        exit(0);
    }
    yyin = fopen(argv[1], "r");
-   symbolTable = (SymbolTable*)malloc(sizeof(SymbolTable));
-   symbolTable->prev = NULL;
-   symbolTable->next = NULL;
-   symbolTable->symbol_head = NULL;
+   symbol_table = (SymbolTable*)malloc(sizeof(SymbolTable));
+   symbol_table->prev = NULL;
+   symbol_table->next = NULL;
+   symbol_table->symbol_head = NULL;
+   stack = NULL;
    yyparse();
 }
 

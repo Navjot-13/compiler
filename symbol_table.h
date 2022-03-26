@@ -65,6 +65,28 @@ Symbol* search_symbol(char* id) {
     return NULL;
 }
 
+void push_symbol_table() {
+    if(symbol_table == NULL){
+        symbol_table = (SymbolTable*)malloc(sizeof(SymbolTable));
+        symbol_table->prev = NULL;
+        symbol_table->next = NULL;
+        symbol_table->symbol_head = NULL;
+    } else {
+        symbol_table->next = (SymbolTable*) malloc(sizeof(SymbolTable));
+        symbol_table->next->prev = symbol_table;
+        symbol_table = symbol_table->next;
+        symbol_table->next = NULL;
+        symbol_table->symbol_head = NULL;
+    }
+}
+
+void pop_symbol_table() {
+    SymbolTable* latest_symbol_table = symbol_table->prev;
+    free(symbol_table);
+    symbol_table = latest_symbol_table;
+    symbol_table->next = NULL;
+}
+
 // Stack functions
 void push(Symbol* symbol) {
     char *name = (char*)malloc((strlen(symbol->name)+1)*sizeof(char));

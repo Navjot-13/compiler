@@ -1,10 +1,22 @@
 begin {
     int b,a;
     b = 4;
+<<<<<<< HEAD:test2
     if(b < 5){
+=======
+    int d;
+    if(a < 5 and b > 6) {
+>>>>>>> b16b93a46c2df49b9b996d8bb0b6a82fe6f458ff:test
         a = 5;
+        int c;
+        c = d;
+        int e;
     }
+<<<<<<< HEAD:test2
     else{
         a = 4;
     }
+=======
+    e = 5;
+>>>>>>> b16b93a46c2df49b9b996d8bb0b6a82fe6f458ff:test
 }

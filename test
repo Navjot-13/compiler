@@ -1,7 +1,12 @@
 begin {
     int b,a;
     b = 4;
-    if(a < 5){
+    int d;
+    if(a < 5 and b > 6) {
         a = 5;
+        int c;
+        c = d;
+        int e;
     }
+    e = 5;
 }

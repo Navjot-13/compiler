@@ -61,14 +61,18 @@ arg_list:           arg_list',' expr
 
 
 /*------------------Statement Declaration---------------------*/
-statements:         '{' stmt_list '}' {
+statements:             { push_symbol_table(); }
+                        '{' stmt_list '}' {
                                $$ = (AST*) malloc(sizeof(AST));
-                               $$ = Ast_new("NA",$2,NULL); 
-                        } 
+                               $$ = Ast_new("NA",$3,NULL); 
+                               pop_symbol_table();
+                        }
                     | 
-                    stmt {
+                        { push_symbol_table(); }
+                        stmt {
                                 $$ = (AST*) malloc(sizeof(AST));
-                                $$ = Ast_new("NA",$1,NULL);
+                                $$ = Ast_new("NA",$2,NULL);
+                                pop_symbol_table();
                         }
                     ;
 
@@ -318,9 +322,25 @@ arr_variable:       ID'['expr']'
                     | arr_variable '['expr']';
 
 
-cond_stmt:          IF '(' expr')' '{' stmt_list'}' cond_stmt2 {};
+cond_stmt:          IF '(' expr')' '{' 
+                        {
+                                push_symbol_table();
+                        }
+                        stmt_list
+                        {
+                                pop_symbol_table();
+                        }
+                        '}' cond_stmt2 {};
 
-cond_stmt2:         ELSE stmt | ;
+cond_stmt2:         ELSE
+                        {
+                                push_symbol_table();
+                        }
+                        stmt 
+                        {
+                                pop_symbol_table();
+                        }
+                        | ;
 
 
 

@@ -73,8 +73,8 @@ void push_symbol_table() {
         symbol_table->symbol_head = NULL;
     } else {
         symbol_table->next = (SymbolTable*) malloc(sizeof(SymbolTable));
+        symbol_table->next->prev = symbol_table;
         symbol_table = symbol_table->next;
-        symbol_table->prev = NULL;
         symbol_table->next = NULL;
         symbol_table->symbol_head = NULL;
     }

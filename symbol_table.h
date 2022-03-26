@@ -53,9 +53,9 @@ Symbol* search_symbol(char* id) {
     while (cur_symbol_table != NULL) {
         Symbol* cur_symbol = cur_symbol_table->symbol_head;
         while (cur_symbol != NULL) {
-            printf("bruh: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
+            printf("Performing comparison in symbol table: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
             if (strcmp(cur_symbol->name, id) == 0) {
-                printf("Still? : %s\n",cur_symbol->name);
+                printf("Match found: %s\n",cur_symbol->name);
                 return cur_symbol;
             }
             cur_symbol = cur_symbol->next;
@@ -77,7 +77,7 @@ void push(Symbol* symbol) {
         while (cur_symbol->next != NULL) {
             cur_symbol = cur_symbol->next;
         }
-        cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
+        cur_symbol->next = symbol_init(name, symbol->type, cur_symbol, NULL);
     }
 }
 

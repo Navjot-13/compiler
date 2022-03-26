@@ -305,7 +305,6 @@ unary_op_stmt:      NOT unary_op_stmt {
 
 variable:           ID      {
                                 Symbol* symbol = search_symbol($1);
-                                printf("Here: %s\n",$1);
                                 if(symbol == NULL){
                                         printf("Identifier undeclared : %s\n",$1);
                                         return 0;

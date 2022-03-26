@@ -103,7 +103,7 @@ letter_ [A-Za-z_]
 
 {digit}+                        { yylval.int_val = atoi(yytext); return INT_CONST; }
 
-{digit}+"."{digit}+             { return DCML_CONST; }
+{digit}+"."{digit}+             { yylval.double_val = atof(yytext); return DCML_CONST; }
 
 {letter_}({letter_}|{digit})*   { strcpy(yylval.str_val, yytext); return ID; }
 

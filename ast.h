@@ -1,6 +1,10 @@
 #ifndef AST_H
 #define AST_H
 
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
 typedef struct AST{
         char *op;
         bool is_unary;
@@ -25,8 +29,6 @@ typedef struct AST{
 
 } AST;
 
-#endif
-
 AST* Ast_new(char *op, AST* left, AST* right){
         AST* ast = (AST *)malloc(sizeof(AST));
         ast->op = (char*)malloc((strlen(op)+1)*sizeof(char));
@@ -45,3 +47,5 @@ AST* Ast_new(char *op, AST* left, AST* right){
         ast->datatype = -1;
         return ast;
 }
+
+#endif

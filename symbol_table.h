@@ -48,12 +48,14 @@ void push_symbol(Symbol* symbol) {
 }
 
 Symbol* search_symbol(char* id) {
-    Symbol* required = NULL;
+    printf("Search: %s\n",id);
     SymbolTable* cur_symbol_table = symbol_table;
     while (cur_symbol_table != NULL) {
         Symbol* cur_symbol = cur_symbol_table->symbol_head;
         while (cur_symbol != NULL) {
+            printf("bruh: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
             if (strcmp(cur_symbol->name, id) == 0) {
+                printf("Still? : %s\n",cur_symbol->name);
                 return cur_symbol;
             }
             cur_symbol = cur_symbol->next;

@@ -126,7 +126,7 @@ assign_stmt:        data_type L SCOL {
 
 L:                  L ',' ID {
                                 $$ = (Symbol *) malloc(sizeof(Symbol));
-                                $$ = symbol_init($1->name,-1,NULL,NULL);
+                                $$ = symbol_init($3,-1,NULL,NULL);
                                 push($$);
                         }
                     | 
@@ -305,8 +305,9 @@ unary_op_stmt:      NOT unary_op_stmt {
 
 variable:           ID      {
                                 Symbol* symbol = search_symbol($1);
+                                printf("Here: %s\n",$1);
                                 if(symbol == NULL){
-                                        printf("Identifier undeclared!!!\n");
+                                        printf("Identifier undeclared : %s\n",$1);
                                         return 0;
                                 }
                         }
@@ -318,7 +319,7 @@ arr_variable:       ID'['expr']'
                     | arr_variable '['expr']';
 
 
-cond_stmt:          IF '(' expr ')' '{'stmt_list'}' cond_stmt2 {};
+cond_stmt:          IF '(' expr')' '{' stmt_list'}' cond_stmt2 {};
 
 cond_stmt2:         ELSE stmt | ;
 

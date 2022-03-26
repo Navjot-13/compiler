@@ -29,7 +29,7 @@ typedef struct AST{
 
 AST* Ast_new(char *op, AST* left, AST* right){
         AST* ast = (AST *)malloc(sizeof(AST));
-        ast->op = (char*)malloc(strlen(op)*sizeof(char));
+        ast->op = (char*)malloc((strlen(op)+1)*sizeof(char));
         strcpy(ast->op,op);
         ast->left = left;
         ast->right = right;

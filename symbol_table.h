@@ -26,7 +26,7 @@ SymbolTable* symbol_table;  // Symbol table for current scope
 
 Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     Symbol* new_symbol = (Symbol*)malloc(sizeof(Symbol));
-    new_symbol->name = (char*)malloc(strlen(name) * sizeof(char));
+    new_symbol->name = (char*)malloc((strlen(name)+1) * sizeof(char));
     new_symbol->name = name;
     new_symbol->type = type;
     new_symbol->prev = prev;
@@ -43,7 +43,7 @@ void push_symbol(Symbol* symbol) {
         while (cur_symbol->next != NULL) {
             cur_symbol = cur_symbol->next;
         }
-        cur_symbol->next = symbol_init(symbol->name, symbol->type, NULL, NULL);
+        cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
     }
 }
 
@@ -67,7 +67,7 @@ Symbol* search_symbol(char* id) {
 
 // Stack functions
 void push(Symbol* symbol) {
-    char *name = (char*)malloc(strlen(symbol->name)*sizeof(char));
+    char *name = (char*)malloc((strlen(symbol->name)+1)*sizeof(char));
     strcpy(name, symbol->name);
     if (stack == NULL) {
         stack = symbol_init(name, symbol->type, NULL, NULL);

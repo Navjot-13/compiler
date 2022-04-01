@@ -7,6 +7,9 @@
 #include "symbol_table.h"
 #include "ast.h"
 
+Symbol *stack;
+SymbolTable* symbol_table;
+
 extern FILE * yyin;
 int yylex();
 int yyerror(char *);

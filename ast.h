@@ -6,19 +6,38 @@
 #include<string.h>
 #include "symbol_table.h"
 
+#define ast_stmt_list 0
+#define ast_assgn_stmt 1
+#define ast_cond_stmt 2
+#define ast_loop_stmt 3
+#define ast_array_decl_stmt 4
+#define ast_expressions_stmt 5
+#define ast_arry_assgn_stmt 6
+#define ast_variable_stmt 7
+#define ast_aeq_stmt 8
+#define ast_seq_stmt 9
+#define ast_meq_stmt 10
+#define ast_deq_stmt 11
+#define ast_incr_stmt 12
+#define ast_decr_stmt 13
+#define ast_or_stmt 14
+#define ast_and_stmt 15
+#define ast_eq_stmt 17
+#define ast_neq_stmt 18
+#define ast_lt_stmt 19
+#define ast_gt_stmt 20
+#define ast_geq_stmt 21
+#define ast_leq_stmt 22
+#define ast_add_stmt 23
+#define ast_sub_stmt 24
+#define ast_mul_stmt 25
+#define ast_div_stmt 26
+#define ast_unary_not 27
+#define ast_unary_add 28
+#define ast_unary_sub 29
+
 typedef struct AST{
-        char *op;
-        bool is_unary;
-        bool is_leaf;
-        bool is_array;
-        bool is_expressions;
-        bool is_stmt_list;
-        bool is_assign_stmt;
-        bool is_cond_stmt;
-        bool is_loop_stmt;
-        bool is_array_stmt;
-        bool is_condition_stmt;
-        bool is_expression_stmt;
+        int type;
         int datatype;
         Symbol *symbol;
         union {
@@ -31,21 +50,11 @@ typedef struct AST{
 
 } AST;
 
-AST* make_node(char *op, AST* left, AST* right){
+AST* make_node(int type, AST* left, AST* right){
         AST* ast = (AST *)malloc(sizeof(AST));
-        ast->op = (char*)malloc((strlen(op)+1)*sizeof(char));
-        strcpy(ast->op,op);
+        ast->type = type;
         ast->left = left;
         ast->right = right;
-        ast->is_unary = false;
-        ast->is_leaf = false;
-        ast->is_expressions = false;
-        ast->is_stmt_list = false;
-        ast->is_assign_stmt = false;
-        ast->is_cond_stmt = false;
-        ast->is_loop_stmt = false;
-        ast->is_array_stmt = false;
-        ast->is_condition_stmt = false;
         ast->datatype = -1;
         ast->symbol = NULL;
         return ast;

@@ -5,7 +5,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-// Stores the type of one variable
+// Stores the information of one variable
 typedef struct Symbol {
     char* name;
     int type;

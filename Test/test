@@ -1,0 +1,16 @@
+begin{
+    int i;
+    decimal d;
+    string str;
+    d = 5.5 + 8;
+    i = 4;
+    int x;
+    if(i > 0) {
+        x = 5;
+    } else if ( i < 0) {
+        x = 5;
+    }
+    ifloop(x < 10){
+        x++;
+    }
+}

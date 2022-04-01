@@ -2,25 +2,45 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
-extern FILE * yyin;
+#include<stdbool.h>
+
+#include "Utils/symbol_table.h"
+#include "Utils/ast.h"
+
+Symbol *stack;
+SymbolTable* symbol_table;
+
 int yylex();
 int yyerror(char *);
+
+const int INT_TYPE = 0;
+const int DOUBLE_TYPE = 1;
+const int STR_TYPE = 2;
+const int BOOL_TYPE = 3;
+const int ARRAY_TYPE = 4;
 %}
 
 %union {
   int int_val;
   double double_val;
   char str_val[300];
+  struct AST *ast;
+  struct Symbol *symbol;
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL ID BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
-%token <int_val> INT_CONST
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
+%token <int_val> INT_CONST 
 %token <double_val> DCML_CONST
-%token <str_val> STR_CONST
+%token <str_val> STR_CONST ID
+%type<int_val> data_type comp_op
+%type<symbol> L
+%type<str_val> variable
+%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable
+expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt
 %%
 
-program:            func_list BGN statements {printf("No problem\n");}; 
+program:            func_list  BGN statements {printf("No problem\n");}; 
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function|  ;
@@ -45,98 +65,462 @@ arg_list:           arg_list',' expr
 
 
 /*------------------Statement Declaration---------------------*/
-statements:         '{' stmt_list '}' | stmt;
+statements:             { push_symbol_table(); }
+                        '{' stmt_list '}' {
+                               $$ = $3;
+                               pop_symbol_table();
+                        }
+                    | 
+                        { push_symbol_table(); }
+                        stmt {
+                                $$ = $2;
+                                pop_symbol_table();
+                        }
+                    ;
 
-stmt_list:          stmt_list stmt | stmt;
+stmt_list:      stmt_list stmt 
+                {
+                        $$ = make_node(ast_stmt_list,$2,$1);
+                }
+                
+                | stmt  
+                
+                {
+                        $$ = make_node(ast_stmt_list,NULL,NULL);
+                }
+                ;
 
-stmt:               assign_stmt | cond_stmt | loop_stmt | array_decl | expressions;
-
-
-assign_stmt:        data_type L SCOL;
-
-L:                  L',' ID | ID;
-
-array_decl:         ARR '<'data_type',' INT_CONST'>' ID SCOL;
-
-
-expressions:        expr SCOL;
-
-expr:               variable ASSIGN expr
-                    | variable AEQ expr
-                    | variable SEQ expr
-                    | variable MEQ expr
-                    | variable DEQ expr
-                    | variable INCR
-                    | variable DECR
-                    | cond_or_stmt;
-
-variable:           ID
-                    | ID '(' args ')'
-                    | arr_variable;
-
-arr_variable:       ID'['expr']'
-                    | arr_variable '['expr']';
-
-cond_or_stmt:       cond_or_stmt OR cond_and_stmt
-                    | cond_and_stmt;
-
-cond_and_stmt:      cond_and_stmt AND eql_stmt
-                    | eql_stmt;
-
-eql_stmt:           eql_stmt EQ comp_stmt
-                    | eql_stmt NEQ comp_stmt
-                    | comp_stmt;
-
-comp_stmt:          comp_stmt comp_op arithmetic_stmt1
-                    | arithmetic_stmt1;
-
-comp_op:            '>'
-                    | '<'
-                    | GEQ
-                    | LEQ;
-
-arithmetic_stmt1:   arithmetic_stmt1 ADD arithmetic_stmt2
-                    | arithmetic_stmt1 SUB arithmetic_stmt2
-                    | arithmetic_stmt2;
-
-arithmetic_stmt2:   arithmetic_stmt2 MUL unary_op_stmt
-                    | arithmetic_stmt2 DIV unary_op_stmt
-                    | unary_op_stmt;
-
-unary_op_stmt:      NOT unary_op_stmt
-                    | ADD unary_op_stmt
-                    | SUB unary_op_stmt
-                    | variable
-                    | constant;
+stmt:           assign_stmt 
+                {
+                        $$ = $1;
+                }
+                
+                | cond_stmt 
+                
+                {
+                        $$ = $1;
+                } 
+                
+                | loop_stmt
+                
+                {
+                        $$ = $1;
+                } 
+                
+                | array_decl
+                
+                {
+                        $$ = $1;
+                } 
+                
+                | expressions 
+                
+                {
+                        $$ = $1;
+                }
+                ;
 
 
-cond_stmt:          IF '(' expr ')' '{'stmt_list'}' cond_stmt2;
+assign_stmt:    data_type L SCOL 
+                {
+                        $$ = make_node(ast_assgn_stmt,NULL,NULL);
+                        while(stack != NULL){
+                                Symbol* symbol = pop();
+                                symbol->type = $1;
+                                push_symbol(symbol);
+                        }
+                }
+                ;
 
-cond_stmt2:         ELSE stmt | ;
+L:              L ',' ID 
+                {
+                        $$ = symbol_init($3,-1,NULL,NULL);
+                        push($$);
+                }
+                
+                | 
+                
+                ID      
+                {
+                        $$ = symbol_init($1,-1,NULL,NULL);
+                        push($$);
+                }
+                ;
+
+array_decl:     ARR '<' X ',' INT_CONST'>' ID SCOL
+                {
+                        $$ = make_node(ast_array_decl_stmt,NULL,NULL);
+                }
+                ;
+X:              ARR '<' X ',' INT_CONST '>' 
+                {
+                        
+                }
+
+                | data_type
+                
+                {
+                        
+                }
+                ;
+
+
+expressions:    expr SCOL 
+                {
+                        $$ = $1;
+                }
+                ;
+
+expr:           variable ASSIGN expr 
+                {
+                        Symbol *symbol = search_symbol($1);
+                        if(symbol->type != $3->datatype){
+                                printf("Type mismatch occurred.");
+                                return 0;
+                        }
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_assgn_stmt,ast,$3);
+                }
+                
+                | variable AEQ expr 
+                
+                {
+                        Symbol *symbol = search_symbol($1);
+                        if(symbol->type != $3->datatype){
+                                printf("Type mismatch occurred.");
+                                return 0;
+                        }
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_aeq_stmt,ast,$3);
+                }
+                
+                | variable SEQ expr 
+                
+                {
+                        Symbol *symbol = search_symbol($1);
+                        if(symbol->type != $3->datatype){
+                                printf("Type mismatch occurred.");
+                                return 0;
+                        }
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_seq_stmt,ast,$3);
+                }
+                
+                | variable MEQ expr 
+                
+                {
+                        Symbol *symbol = search_symbol($1);
+                        if(symbol->type != $3->datatype){
+                                printf("Type mismatch occurred.");
+                                return 0;
+                        }
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_meq_stmt,ast,$3);
+                }
+                
+                | variable DEQ expr 
+                
+                {
+                        Symbol *symbol = search_symbol($1);
+                        if(symbol->type != $3->datatype){
+                                printf("Type mismatch occurred.");
+                                return 0;
+                        }
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_deq_stmt,ast,$3);
+                }
+                
+                | variable INCR 
+                
+                {
+                        Symbol *symbol = search_symbol($1);
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_incr_stmt,ast,NULL);
+                }
+                
+                | variable DECR 
+                
+                {
+                        Symbol *symbol = search_symbol($1);
+                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
+                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        $$ = make_node(ast_decr_stmt,ast,NULL);
+                }
+                
+                | cond_or_stmt 
+                
+                {
+                        $$ = $1;
+                }
+                ;
+
+cond_or_stmt:   cond_or_stmt OR cond_and_stmt 
+                {
+                        $$ = make_node(ast_or_stmt,$1,$3);
+                }
+                
+                | cond_and_stmt 
+                
+                {
+                        $$ = $1;
+                }
+                ;
+
+cond_and_stmt:  cond_and_stmt AND eql_stmt 
+                {
+                        $$ = make_node(ast_and_stmt,$1,$3);
+                }
+                
+                | eql_stmt 
+                    
+                {
+                        $$ = $1;
+                }
+                ;
+
+eql_stmt:       eql_stmt EQ comp_stmt 
+                {
+                        $$ = make_node(ast_eq_stmt,$1,$3);
+                }
+                
+                | eql_stmt NEQ comp_stmt 
+                
+                {
+                        $$ = make_node(ast_neq_stmt,$1,$3);
+                }
+                
+                | comp_stmt 
+                
+                {
+                        $$ = $1;
+                }
+                ;
+
+comp_stmt:      comp_stmt comp_op arithmetic_stmt1 
+                {
+                        $$ = make_node($2,$1,$3);
+                }
+                
+                | arithmetic_stmt1 
+                
+                {
+                        $$ = $1;
+                }
+                ;
+
+comp_op:        '>'     
+                {
+                        $$ = ast_lt_stmt;
+                }
+                    
+                | '<'  
+                
+                {
+                        $$ = ast_gt_stmt;
+                }
+                
+                | GEQ  
+                
+                {
+                        $$ = ast_geq_stmt;     
+                }
+                
+                | LEQ  
+                
+                {
+                        $$ = ast_leq_stmt;
+                }
+                ;
+
+arithmetic_stmt1:       arithmetic_stmt1 ADD arithmetic_stmt2   
+                        {
+                                $$ = make_node(ast_add_stmt,$1,$3);
+                        }
+                        
+                        | 
+                        
+                        arithmetic_stmt1 SUB arithmetic_stmt2 
+                        {
+                                $$ = make_node(ast_sub_stmt,$1,$3);
+                        }
+                        
+                        | 
+                        arithmetic_stmt2 
+                        {
+                                $$ = $1;
+                        }
+                    ;
+
+arithmetic_stmt2:       arithmetic_stmt2 MUL unary_op_stmt 
+                        {
+                                $$ = make_node(ast_mul_stmt,$1,$3);
+                        }
+                        
+                        | arithmetic_stmt2 DIV unary_op_stmt 
+                        
+                        {
+                                $$ = make_node(ast_div_stmt,$1,$3);
+                        }
+                        
+                        | unary_op_stmt 
+                        
+                        {
+                                $$ = $1;
+                        }
+                    ;
+
+unary_op_stmt:  NOT unary_op_stmt 
+                {
+                        $$ = make_node(ast_unary_not,$2,NULL);
+                }
+                
+                | ADD unary_op_stmt 
+                
+                {
+                        $$ = make_node(ast_unary_add,$2,NULL);
+                }
+                
+                | SUB unary_op_stmt 
+                
+                {
+                        $$ = make_node(ast_unary_sub,$2,NULL);
+                }
+                
+                | variable 
+                
+                {
+                        $$ = $1;
+                }
+                
+                | constant 
+                
+                {    
+                        $$ = $1;
+                }
+                ;
+
+variable:       ID 
+                {
+                        Symbol* symbol = search_symbol($1);
+                        if(symbol == NULL){
+                                printf("Identifier undeclared : %s\n",$1);
+                                return 0;
+                        }
+                }
+                
+                | ID '(' args ')' {}
+                
+                | arr_variable 
+                
+                {
+                        
+                }
+                
+                ;
+
+arr_variable:   ID'['expr']'
+                {
+                        $$ = make_node(ast_arry_assgn_stmt,$3,NULL);
+                        Symbol* symbol = search_symbol($1);
+                        if(symbol == NULL){
+                                printf("Identifier undeclared : %s\n",$1);
+                                return 0;
+                        }
+                        $$->symbol = symbol_init($1,symbol->type,NULL,NULL);   
+                }
+                
+                | arr_variable '['expr']'
+
+                {
+                        $$ = make_node(ast_arry_assgn_stmt,$1,$3);
+                        $$->symbol = $1->symbol;
+                }
+                ;
+
+
+cond_stmt:      IF '(' expr')' '{' 
+                {
+                        push_symbol_table();
+                }
+                stmt_list
+                {
+                        pop_symbol_table();
+                }
+                '}' cond_stmt2 {};
+
+cond_stmt2:         ELSE
+                        {
+                                push_symbol_table();
+                        }
+                        stmt 
+                        {
+                                pop_symbol_table();
+                        }
+                        | ;
 
 
 
-loop_stmt:          LP '(' expr ')' statements;
+loop_stmt:          LP '(' expr ')' statements {    
+                                $$ = make_node(ast_loop_stmt,$3,$5);
+                        }
+                    ;
 
 
-data_type:          INT | DCML | STR | BOOL;
-constant:           INT_CONST | DCML_CONST | STR_CONST;
+data_type:      INT 
+                {
+                        $$ = INT_TYPE;
+                }
+
+                | DCML
+                
+                {
+                        $$ = DOUBLE_TYPE;
+                }
+                        
+                | STR 
+                
+                {
+                        $$ = STR_TYPE;
+                }
+                
+                | BOOL 
+                
+                {
+                        $$ = BOOL_TYPE;
+                };
+
+constant:       INT_CONST 
+                {
+                        $$ = (AST*) malloc(sizeof(AST));
+                        $$->val.int_val = $1;
+                }
+
+                | DCML_CONST 
+
+                {
+                        $$ = (AST*) malloc(sizeof(AST));
+                        $$->val.double_val = $1;
+                }
+
+                | STR_CONST
+
+                {
+                        $$ = (AST*) malloc(sizeof(AST));
+                        strcpy($$->val.str_val,$1);
+                }
+                
+                | TRU {}
+                | FLS {};
 /*------------------------------------------------------------*/
 
 %%
 
-int main(int argc, char *argv[])
-{
-   if (argc != 2) {
-       printf("\nUsage: <exefile> <inputfile>\n");
-       exit(0);
-   }
-   yyin = fopen(argv[1], "r");
-  yyparse();
-}
-
-
 int yyerror(char *s){
   printf("Error: %s\n", s);
 }
-

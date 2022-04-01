@@ -4,13 +4,12 @@
 #include<stdlib.h>
 #include<stdbool.h>
 
-#include "symbol_table.h"
-#include "ast.h"
+#include "Utils/symbol_table.h"
+#include "Utils/ast.h"
 
 Symbol *stack;
 SymbolTable* symbol_table;
 
-extern FILE * yyin;
 int yylex();
 int yyerror(char *);
 
@@ -521,22 +520,6 @@ constant:       INT_CONST
 /*------------------------------------------------------------*/
 
 %%
-
-int main(int argc, char *argv[])
-{
-   if (argc != 2) {
-       printf("\nUsage: <exefile> <inputfile>\n");
-       exit(0);
-   }
-   yyin = fopen(argv[1], "r");
-   symbol_table = (SymbolTable*)malloc(sizeof(SymbolTable));
-   symbol_table->prev = NULL;
-   symbol_table->next = NULL;
-   symbol_table->symbol_head = NULL;
-   stack = NULL;
-   yyparse();
-}
-
 
 int yyerror(char *s){
   printf("Error: %s\n", s);

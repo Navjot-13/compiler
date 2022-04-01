@@ -448,7 +448,10 @@ constant:       INT_CONST
                         $$ = (AST*) malloc(sizeof(AST));
                         $$->is_leaf = true;
                         strcpy($$->val.str_val,$1);
-                };
+                }
+                
+                | TRU {}
+                | FLS {};
 /*------------------------------------------------------------*/
 
 %%

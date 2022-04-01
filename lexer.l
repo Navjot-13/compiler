@@ -99,7 +99,7 @@ letter_ [A-Za-z_]
 
 "#\*(\*(?!#)|[^*])*\*#"         { return MLTI_CMNT; }
 
-"\".*\"" | "\'.*\'"             { strcpy(yylval.str_val, yytext); return STR_CONST; }
+\".*\"|\'.*\'                   { strcpy(yylval.str_val, yytext); return STR_CONST; }
 
 {digit}+                        { yylval.int_val = atoi(yytext); return INT_CONST; }
 

@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include "symbol_table.h"
 
 typedef struct AST{
         char *op;

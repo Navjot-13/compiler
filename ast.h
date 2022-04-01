@@ -19,6 +19,7 @@ typedef struct AST{
         bool is_condition_stmt;
         bool is_expression_stmt;
         int datatype;
+        Symbol *symbol;
         union {
                 int int_val;
                 double double_val;
@@ -29,7 +30,7 @@ typedef struct AST{
 
 } AST;
 
-AST* Ast_new(char *op, AST* left, AST* right){
+AST* make_node(char *op, AST* left, AST* right){
         AST* ast = (AST *)malloc(sizeof(AST));
         ast->op = (char*)malloc((strlen(op)+1)*sizeof(char));
         strcpy(ast->op,op);
@@ -45,6 +46,7 @@ AST* Ast_new(char *op, AST* left, AST* right){
         ast->is_array_stmt = false;
         ast->is_condition_stmt = false;
         ast->datatype = -1;
+        ast->symbol = NULL;
         return ast;
 }
 

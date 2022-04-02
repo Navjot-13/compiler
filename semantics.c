@@ -6,6 +6,7 @@
 #include "y.tab.h"
 
 extern FILE *yyin;
+extern AST *astroot;
 
 int main(int argc, char *argv[])
 {

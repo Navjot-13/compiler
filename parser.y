@@ -36,9 +36,8 @@ const int ARRAY_TYPE = 4;
 %token <str_val> STR_CONST ID
 %type<int_val> data_type comp_op
 %type<symbol> L
-%type<str_val> variable
 %type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program
-expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt
+expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable
 %%
 
 program:        func_list  BGN statements 
@@ -92,7 +91,7 @@ stmt_list:      stmt_list stmt
                 | stmt  
                 
                 {
-                        $$ = make_node(ast_stmt_list,NULL,NULL);
+                        $$ = $1;
                 }
                 ;
 

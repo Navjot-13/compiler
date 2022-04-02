@@ -50,14 +50,6 @@ typedef struct AST{
 
 } AST;
 
-AST* make_node(int type, AST* left, AST* right){
-        AST* ast = (AST *)malloc(sizeof(AST));
-        ast->type = type;
-        ast->left = left;
-        ast->right = right;
-        ast->datatype = -1;
-        ast->symbol = NULL;
-        return ast;
-}
+AST* make_node(int type, AST* left, AST* right);
 
 #endif

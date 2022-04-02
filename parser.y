@@ -34,11 +34,16 @@ const int ARRAY_TYPE = 4;
 %type<int_val> data_type comp_op
 %type<symbol> L
 %type<str_val> variable
-%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable
+%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program
 expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt
 %%
 
-program:            func_list  BGN statements {printf("No problem\n");}; 
+program:        func_list  BGN statements 
+                {
+                        printf("No problem\n");
+                        $$ = $3;
+                }
+                ; 
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function|  ;

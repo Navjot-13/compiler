@@ -1,13 +1,4 @@
 begin {
-    int b,a;
-    b = 4;
-    int d;
-    string str;
-    str = 'hello asdf asdf';
-    if(a < 5 and b > 6) {
-        a = 5;
-        int c;
-        c = d;
-        int e;
-    }
+    int b,a,c,d;
+    a = 4;
 }

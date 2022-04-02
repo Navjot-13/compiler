@@ -85,7 +85,7 @@ statements:             { push_symbol_table(); }
 
 stmt_list:      stmt_list stmt 
                 {
-                        $$ = make_node(ast_stmt_list,$2,$1);
+                        $$ = make_node(ast_stmt_list,$1,$2);
                 }
                 
                 | stmt  
@@ -128,7 +128,7 @@ stmt:           assign_stmt
 
 assign_stmt:    data_type L SCOL 
                 {
-                        $$ = make_node(ast_assgn_stmt,NULL,NULL);
+                        $$ = make_node(ast_decl_stmt,NULL,NULL);
                         while(stack != NULL){
                                 Symbol* symbol = pop();
                                 symbol->type = $1;
@@ -138,7 +138,7 @@ assign_stmt:    data_type L SCOL
                 ;
 
 L:              L ',' ID 
-                {
+                {       
                         $$ = symbol_init($3,-1,NULL,NULL);
                         push($$);
                 }

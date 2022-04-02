@@ -178,83 +178,83 @@ expressions:    expr SCOL
 
 expr:           variable ASSIGN expr 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         // if(symbol->type != $3->datatype){
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_assgn_stmt,ast,$3);
                 }
                 
                 | variable AEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         // if(symbol->type != $3->datatype){
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_aeq_stmt,ast,$3);
                 }
                 
                 | variable SEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         // if(symbol->type != $3->datatype){
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_seq_stmt,ast,$3);
                 }
                 
                 | variable MEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         // if(symbol->type != $3->datatype){
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_meq_stmt,ast,$3);
                 }
                 
                 | variable DEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         // if(symbol->type != $3->datatype){
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_deq_stmt,ast,$3);
                 }
                 
                 | variable INCR 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_incr_stmt,ast,NULL);
                 }
                 
                 | variable DECR 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
+                        Symbol *symbol = search_symbol($1->symbol->name);
                         AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
+                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
                         $$ = make_node(ast_decr_stmt,ast,NULL);
                 }
                 
@@ -417,6 +417,7 @@ variable:       ID
                                 printf("Identifier undeclared : %s\n",$1);
                                 return 0;
                         }
+                        $$ = make_node(ast_variable_stmt,NULL,NULL);
                 }
                 
                 | ID '(' args ')' {}

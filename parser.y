@@ -183,9 +183,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_assgn_stmt,ast,$3);
+                        $$ = make_node(ast_assgn_stmt,$1,$3);
                 }
                 
                 | variable AEQ expr 
@@ -196,9 +194,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_aeq_stmt,ast,$3);
+                        $$ = make_node(ast_aeq_stmt,$1,$3);
                 }
                 
                 | variable SEQ expr 
@@ -209,9 +205,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_seq_stmt,ast,$3);
+                        $$ = make_node(ast_seq_stmt,$1,$3);
                 }
                 
                 | variable MEQ expr 
@@ -222,9 +216,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_meq_stmt,ast,$3);
+                        $$ = make_node(ast_meq_stmt,$1,$3);
                 }
                 
                 | variable DEQ expr 
@@ -235,27 +227,21 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_deq_stmt,ast,$3);
+                        $$ = make_node(ast_deq_stmt,$1,$3);
                 }
                 
                 | variable INCR 
                 
                 {
                         Symbol *symbol = search_symbol($1->symbol->name);
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_incr_stmt,ast,NULL);
+                        $$ = make_node(ast_incr_stmt,$1,NULL);
                 }
                 
                 | variable DECR 
                 
                 {
                         Symbol *symbol = search_symbol($1->symbol->name);
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1->symbol->name,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_decr_stmt,ast,NULL);
+                        $$ = make_node(ast_decr_stmt,$1,NULL);
                 }
                 
                 | cond_or_stmt 
@@ -418,6 +404,9 @@ variable:       ID
                                 return 0;
                         }
                         $$ = make_node(ast_variable_stmt,NULL,NULL);
+                        char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
+                        strcpy(name, $1);
+                        $$->symbol = symbol_init(name,symbol->type,NULL,NULL);
                 }
                 
                 | ID '(' args ')' {}
@@ -438,7 +427,9 @@ arr_variable:   ID'['expr']'
                                 printf("Identifier undeclared : %s\n",$1);
                                 return 0;
                         }
-                        $$->symbol = symbol_init($1,symbol->type,NULL,NULL);   
+                        char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
+                        strcpy(name, $1);
+                        $$->symbol = symbol_init(name,symbol->type,NULL,NULL);   
                 }
                 
                 | arr_variable '['expr']'

@@ -71,6 +71,10 @@ void traverse(AST *astroot)
         {
             break;
         }
+        case ast_var_list:
+        {
+            break;
+        }
         case ast_aeq_stmt:
         {
             break;

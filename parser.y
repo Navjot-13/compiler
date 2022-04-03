@@ -35,9 +35,8 @@ const int ARRAY_TYPE = 4;
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST ID
 %type<int_val> data_type comp_op
-%type<symbol> L
 %type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program
-expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable
+expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L
 %%
 
 program:        func_list  BGN statements 
@@ -129,26 +128,39 @@ stmt:           assign_stmt
 assign_stmt:    data_type L SCOL 
                 {
                         $$ = make_node(ast_decl_stmt,NULL,NULL);
-                        while(stack != NULL){
-                                Symbol* symbol = pop();
-                                symbol->type = $1;
-                                push_symbol(symbol);
-                        }
+                        // while(stack != NULL){
+                        //         Symbol* symbol = pop();
+                        //         symbol->type = $1;
+                        //         push_symbol(symbol);
+                        // }
+                        $2->datatype = $1;
                 }
                 ;
 
 L:              L ',' ID 
                 {       
-                        $$ = symbol_init($3,-1,NULL,NULL);
-                        push($$);
+                        AST* var = make_node(ast_variable_stmt,NULL,NULL);
+                        char *name = (char*)malloc((strlen($3)+1)*sizeof(char));
+                        strcpy(name, $3);
+                        var->symbol = symbol_init(name,-1,NULL,NULL);
+                        
+                        $$ = make_node(ast_var_list,$1,var);
+
+                        // $$ = symbol_init($3,-1,NULL,NULL);
+                        // push($$);
                 }
                 
                 | 
                 
                 ID      
                 {
-                        $$ = symbol_init($1,-1,NULL,NULL);
-                        push($$);
+                        $$ = make_node(ast_variable_stmt,NULL,NULL);
+                        char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
+                        strcpy(name, $1);
+                        $$->symbol = symbol_init(name,-1,NULL,NULL);
+
+                        // $$ = symbol_init($1,-1,NULL,NULL);
+                        // push($$);
                 }
                 ;
 

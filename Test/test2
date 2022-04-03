@@ -1,6 +1,6 @@
 begin {
     int a,b,c,d;
     a=5;
-    b=6;
-    e=6;
+    b="hello";
+    e=5;
 }

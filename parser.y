@@ -490,22 +490,25 @@ data_type:      INT
 
 constant:       INT_CONST 
                 {
-                        $$ = (AST*) malloc(sizeof(AST));
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
                         $$->val.int_val = $1;
+                        $$->datatype = INT_TYPE;
                 }
 
                 | DCML_CONST 
 
                 {
-                        $$ = (AST*) malloc(sizeof(AST));
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
                         $$->val.double_val = $1;
+                        $$->datatype = DOUBLE_TYPE;
                 }
 
                 | STR_CONST
 
                 {
-                        $$ = (AST*) malloc(sizeof(AST));
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
                         strcpy($$->val.str_val,$1);
+                        $$->datatype = STR_TYPE;
                 }
                 
                 | TRU {}

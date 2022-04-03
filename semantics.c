@@ -55,6 +55,20 @@ void traverse(AST *astroot)
         }
         case ast_assgn_stmt:
         {
+            if (astroot->child[0]->type == ast_var_expr) {
+                Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
+                if (symbol == NULL) {
+                    printf("\nError: Variable %s not declared\n", astroot->child[0]->symbol->name);
+                    exit(0);
+                }
+                astroot->child[0]->symbol = symbol;
+                astroot->child[0]->datatype = symbol->type;
+                printf("\nAssigning %d to %d\n", astroot->child[1]->datatype, astroot->child[0]->symbol->type);
+                if (symbol->type != astroot->child[1]->datatype) {
+                    printf("\nError: Type mismatch in assignment\n");
+                    exit(0);
+                }
+            }
             break;
         }
         case ast_cond_stmt:
@@ -83,7 +97,7 @@ void traverse(AST *astroot)
         }
         case ast_variable_stmt:
         {
-            astroot->symbol->type = astroot->type;
+            astroot->symbol->type = astroot->datatype;
             push_symbol(astroot->symbol);
             break;
         }
@@ -92,15 +106,6 @@ void traverse(AST *astroot)
             for (int i = 0; i < 4; i++)
                 if (astroot->child[i] != NULL)
                     astroot->child[i]->datatype = astroot->datatype;
-            break;
-        }
-        case ast_var_expr:
-        {
-            Symbol *symbol= search_symbol(astroot->symbol->name);
-            if (symbol == NULL) {
-                printf("Error: Undeclared variable %s\n", astroot->symbol->name);
-                exit(0);
-            }
             break;
         }
         case ast_aeq_stmt:

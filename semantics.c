@@ -11,6 +11,7 @@ extern AST *astroot;
 extern SymbolTable *symbol_table;
 
 void traverse(AST *astroot);
+void typecheck(AST *astroot);
 
 int main(int argc, char *argv[])
 {
@@ -55,20 +56,7 @@ void traverse(AST *astroot)
         }
         case ast_assgn_stmt:
         {
-            if (astroot->child[0]->type == ast_var_expr) {
-                Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
-                if (symbol == NULL) {
-                    printf("\nError: Variable %s not declared\n", astroot->child[0]->symbol->name);
-                    exit(0);
-                }
-                astroot->child[0]->symbol = symbol;
-                astroot->child[0]->datatype = symbol->type;
-                printf("\nAssigning %d to %d\n", astroot->child[1]->datatype, astroot->child[0]->symbol->type);
-                if (symbol->type != astroot->child[1]->datatype) {
-                    printf("\nError: Type mismatch in assignment\n");
-                    exit(0);
-                }
-            }
+            typecheck(astroot);
             break;
         }
         case ast_cond_stmt:
@@ -110,26 +98,32 @@ void traverse(AST *astroot)
         }
         case ast_aeq_stmt:
         {
+            typecheck(astroot);
             break;
         }
         case ast_seq_stmt:
         {
+            typecheck(astroot);
             break;
         }
         case ast_meq_stmt:
         {
+            typecheck(astroot);
             break;
         }
         case ast_deq_stmt:
         {
+            typecheck(astroot);
             break;
         }
         case ast_incr_stmt:
         {
+            typecheck(astroot);
             break;
         }
         case ast_decr_stmt:
         {
+            typecheck(astroot);
             break;
         }
         case ast_or_stmt:
@@ -195,4 +189,21 @@ void traverse(AST *astroot)
     }
     for (int i = 0; i < 4; i++)
         traverse(astroot->child[i]);
+}
+
+void typecheck(AST *astroot) {
+    if (astroot->child[0]->type == ast_var_expr) {
+        Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
+        if (symbol == NULL) {
+            printf("\nError: Variable %s not declared\n", astroot->child[0]->symbol->name);
+            exit(0);
+        }
+        astroot->child[0]->symbol = symbol;
+        astroot->child[0]->datatype = symbol->type;
+        printf("\nAssigning %d to %d\n", astroot->child[1]->datatype, astroot->child[0]->symbol->type);
+        if (symbol->type != astroot->child[1]->datatype) {
+            printf("\nError: Type mismatch in assignment\n");
+            exit(0);
+        }
+    }
 }

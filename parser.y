@@ -84,7 +84,7 @@ statements:             { push_symbol_table(); }
 
 stmt_list:      stmt_list stmt 
                 {
-                        $$ = make_node(ast_stmt_list,$1,$2);
+                        $$ = make_node(ast_stmt_list,$1,$2,NULL,NULL);
                 }
                 
                 | stmt  
@@ -127,26 +127,26 @@ stmt:           assign_stmt
 
 assign_stmt:    data_type L SCOL 
                 {
-                        $$ = make_node(ast_decl_stmt,NULL,$2);
+                        $$ = make_node(ast_decl_stmt,$2,NULL,NULL,NULL);
                         $2->datatype = $1;
                 }
                 ;
 
 L:              L ',' ID 
                 {       
-                        AST* var = make_node(ast_variable_stmt,NULL,NULL);
+                        AST* var = make_node(ast_variable_stmt,NULL,NULL,NULL,NULL);
                         char *name = (char*)malloc((strlen($3)+1)*sizeof(char));
                         strcpy(name, $3);
                         var->symbol = symbol_init(name,-1,NULL,NULL);
                         
-                        $$ = make_node(ast_var_list,$1,var);
+                        $$ = make_node(ast_var_list,$1,var,NULL,NULL);
                 }
                 
                 | 
                 
                 ID      
                 {
-                        $$ = make_node(ast_variable_stmt,NULL,NULL);
+                        $$ = make_node(ast_variable_stmt,NULL,NULL,NULL,NULL);
                         char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
                         strcpy(name, $1);
                         $$->symbol = symbol_init(name,-1,NULL,NULL);
@@ -155,7 +155,7 @@ L:              L ',' ID
 
 array_decl:     ARR '<' X ',' INT_CONST'>' ID SCOL
                 {
-                        $$ = make_node(ast_array_decl_stmt,NULL,NULL);
+                        $$ = make_node(ast_array_decl_stmt,NULL,NULL,NULL,NULL);
                 }
                 ;
 X:              ARR '<' X ',' INT_CONST '>' 
@@ -184,7 +184,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        $$ = make_node(ast_assgn_stmt,$1,$3);
+                        $$ = make_node(ast_assgn_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable AEQ expr 
@@ -195,7 +195,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        $$ = make_node(ast_aeq_stmt,$1,$3);
+                        $$ = make_node(ast_aeq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable SEQ expr 
@@ -206,7 +206,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        $$ = make_node(ast_seq_stmt,$1,$3);
+                        $$ = make_node(ast_seq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable MEQ expr 
@@ -217,7 +217,7 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        $$ = make_node(ast_meq_stmt,$1,$3);
+                        $$ = make_node(ast_meq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable DEQ expr 
@@ -228,21 +228,21 @@ expr:           variable ASSIGN expr
                         //         printf("Type mismatch occurred.");
                         //         return 0;
                         // }
-                        $$ = make_node(ast_deq_stmt,$1,$3);
+                        $$ = make_node(ast_deq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable INCR 
                 
                 {
                         Symbol *symbol = search_symbol($1->symbol->name);
-                        $$ = make_node(ast_incr_stmt,$1,NULL);
+                        $$ = make_node(ast_incr_stmt,$1,NULL,NULL,NULL);
                 }
                 
                 | variable DECR 
                 
                 {
                         Symbol *symbol = search_symbol($1->symbol->name);
-                        $$ = make_node(ast_decr_stmt,$1,NULL);
+                        $$ = make_node(ast_decr_stmt,$1,NULL,NULL,NULL);
                 }
                 
                 | cond_or_stmt 
@@ -254,7 +254,7 @@ expr:           variable ASSIGN expr
 
 cond_or_stmt:   cond_or_stmt OR cond_and_stmt 
                 {
-                        $$ = make_node(ast_or_stmt,$1,$3);
+                        $$ = make_node(ast_or_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | cond_and_stmt 
@@ -266,7 +266,7 @@ cond_or_stmt:   cond_or_stmt OR cond_and_stmt
 
 cond_and_stmt:  cond_and_stmt AND eql_stmt 
                 {
-                        $$ = make_node(ast_and_stmt,$1,$3);
+                        $$ = make_node(ast_and_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | eql_stmt 
@@ -278,13 +278,13 @@ cond_and_stmt:  cond_and_stmt AND eql_stmt
 
 eql_stmt:       eql_stmt EQ comp_stmt 
                 {
-                        $$ = make_node(ast_eq_stmt,$1,$3);
+                        $$ = make_node(ast_eq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | eql_stmt NEQ comp_stmt 
                 
                 {
-                        $$ = make_node(ast_neq_stmt,$1,$3);
+                        $$ = make_node(ast_neq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | comp_stmt 
@@ -296,7 +296,7 @@ eql_stmt:       eql_stmt EQ comp_stmt
 
 comp_stmt:      comp_stmt comp_op arithmetic_stmt1 
                 {
-                        $$ = make_node($2,$1,$3);
+                        $$ = make_node($2,$1,$3,NULL,NULL);
                 }
                 
                 | arithmetic_stmt1 
@@ -332,14 +332,14 @@ comp_op:        '>'
 
 arithmetic_stmt1:       arithmetic_stmt1 ADD arithmetic_stmt2   
                         {
-                                $$ = make_node(ast_add_stmt,$1,$3);
+                                $$ = make_node(ast_add_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | 
                         
                         arithmetic_stmt1 SUB arithmetic_stmt2 
                         {
-                                $$ = make_node(ast_sub_stmt,$1,$3);
+                                $$ = make_node(ast_sub_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | 
@@ -351,13 +351,13 @@ arithmetic_stmt1:       arithmetic_stmt1 ADD arithmetic_stmt2
 
 arithmetic_stmt2:       arithmetic_stmt2 MUL unary_op_stmt 
                         {
-                                $$ = make_node(ast_mul_stmt,$1,$3);
+                                $$ = make_node(ast_mul_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | arithmetic_stmt2 DIV unary_op_stmt 
                         
                         {
-                                $$ = make_node(ast_div_stmt,$1,$3);
+                                $$ = make_node(ast_div_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | unary_op_stmt 
@@ -369,19 +369,19 @@ arithmetic_stmt2:       arithmetic_stmt2 MUL unary_op_stmt
 
 unary_op_stmt:  NOT unary_op_stmt 
                 {
-                        $$ = make_node(ast_unary_not,$2,NULL);
+                        $$ = make_node(ast_unary_not,$2,NULL,NULL,NULL);
                 }
                 
                 | ADD unary_op_stmt 
                 
                 {
-                        $$ = make_node(ast_unary_add,$2,NULL);
+                        $$ = make_node(ast_unary_add,$2,NULL,NULL,NULL);
                 }
                 
                 | SUB unary_op_stmt 
                 
                 {
-                        $$ = make_node(ast_unary_sub,$2,NULL);
+                        $$ = make_node(ast_unary_sub,$2,NULL,NULL,NULL);
                 }
                 
                 | variable 
@@ -404,7 +404,7 @@ variable:       ID
                                 printf("Identifier undeclared : %s\n",$1);
                                 return 0;
                         }
-                        $$ = make_node(ast_variable_stmt,NULL,NULL);
+                        $$ = make_node(ast_variable_stmt,NULL,NULL,NULL,NULL);
                         char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
                         strcpy(name, $1);
                         $$->symbol = symbol_init(name,symbol->type,NULL,NULL);
@@ -422,7 +422,7 @@ variable:       ID
 
 arr_variable:   ID'['expr']'
                 {
-                        $$ = make_node(ast_arry_assgn_stmt,$3,NULL);
+                        $$ = make_node(ast_arry_assgn_stmt,$3,NULL,NULL,NULL);
                         Symbol* symbol = search_symbol($1);
                         if(symbol == NULL){
                                 printf("Identifier undeclared : %s\n",$1);
@@ -436,7 +436,7 @@ arr_variable:   ID'['expr']'
                 | arr_variable '['expr']'
 
                 {
-                        $$ = make_node(ast_arry_assgn_stmt,$1,$3);
+                        $$ = make_node(ast_arry_assgn_stmt,$1,$3,NULL,NULL);
                         $$->symbol = $1->symbol;
                 }
                 ;
@@ -465,7 +465,7 @@ cond_stmt2:         ELSE
 
 
 loop_stmt:          LP '(' expr ')' statements {    
-                                $$ = make_node(ast_loop_stmt,$3,$5);
+                                $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
                         }
                     ;
 

@@ -79,8 +79,9 @@ void traverse(AST *astroot)
         }
         case ast_var_list:
         {
-            astroot->left->datatype = astroot->datatype;
-            astroot->right->datatype = astroot->datatype;
+            for (int i = 0; i < 4; i++)
+                if (astroot->child[i] != NULL)
+                    astroot->child[i]->datatype = astroot->datatype;
             break;
         }
         case ast_aeq_stmt:
@@ -168,6 +169,6 @@ void traverse(AST *astroot)
             break;
         }
     }
-    traverse(astroot->left);
-    traverse(astroot->right);
+    for (int i = 0; i < 4; i++)
+        traverse(astroot->child[i]);
 }

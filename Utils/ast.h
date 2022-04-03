@@ -47,11 +47,10 @@ typedef struct AST{
                 double double_val;
                 char str_val[300];
         } val;
-        struct AST *left;
-        struct AST *right;
+        struct AST *child[4];
 
 } AST;
 
-AST* make_node(int type, AST* left, AST* right);
+AST* make_node(int type, AST *child1, AST *child2, AST *child3, AST *child4);
 
 #endif

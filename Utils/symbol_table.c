@@ -78,14 +78,16 @@ Symbol* search_symbol(char* id) {
 
 void push_symbol(Symbol* symbol) {
     if (symbol_table->symbol_head == NULL) {
-        symbol_table->symbol_head = symbol_init(symbol->name, symbol->type, NULL, NULL);
+        // symbol_table->symbol_head = symbol_init(symbol->name, symbol->type, NULL, NULL);
+        symbol_table->symbol_head = symbol;
     } else {
         // I changed function check once
         Symbol* cur_symbol = symbol_table->symbol_head;
         while (cur_symbol->next != NULL) {
             cur_symbol = cur_symbol->next;
         }
-        cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
+        // cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
+        cur_symbol->next = symbol;
     }
 }
 

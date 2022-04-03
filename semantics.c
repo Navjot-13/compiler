@@ -36,9 +36,21 @@ void traverse(AST *astroot)
 
     switch (astroot->type)
     {
+        case ast_stmts:
+        {
+            for (int i = 0; i < 4; i++)
+                if (astroot->child[i] != NULL) {
+                    if (astroot->child[i]->type == ast_push_scope) {
+                        push_symbol_table();
+                    } else if (astroot->child[i]->type == ast_pop_scope) {
+                        pop_symbol_table();
+                    } else {
+                        // Code gen here
+                    }
+                }
+        }
         case ast_stmt_list:
         {
-            printf("ast_stmt_list\n");
             break;
         }
         case ast_assgn_stmt:

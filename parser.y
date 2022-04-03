@@ -69,10 +69,10 @@ arg_list:           arg_list',' expr
 
 
 /*------------------Statement Declaration---------------------*/
-statements:             { push_symbol_table(); }
-                        '{' stmt_list '}' {
-                               $$ = $3;
-                               pop_symbol_table();
+statements:             '{' stmt_list '}' {
+                                AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                                AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                                $$ = make_node(ast_stmts,push,$2,pop,NULL);
                         }
                     | 
                         { push_symbol_table(); }

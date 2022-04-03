@@ -37,6 +37,9 @@
 #define ast_unary_add 28
 #define ast_unary_sub 29
 #define ast_var_list 30
+#define ast_stmts 31
+#define ast_push_scope 32
+#define ast_pop_scope 33
 
 typedef struct AST{
         int type;

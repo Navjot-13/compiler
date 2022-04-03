@@ -115,6 +115,7 @@ void traverse(AST *astroot)
         }
         case ast_variable_stmt:
         {
+            astroot->symbol->type = astroot->datatype;
             push_symbol(astroot->symbol);
             break;
         }

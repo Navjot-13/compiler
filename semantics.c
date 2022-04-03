@@ -81,7 +81,7 @@ void traverse(AST *astroot)
             astroot->left->datatype = astroot->datatype;
             astroot->right->datatype = astroot->datatype;
             astroot->left->symbol->type = astroot->datatype;
-            astroot->right->symbol->type = astroot->datatype;`
+            astroot->right->symbol->type = astroot->datatype;
             break;
         }
         case ast_aeq_stmt:

@@ -1,4 +1,3 @@
 begin {
-    int b,a,c,d;
-    a = 4;
+    int a,b,c, d;
 }

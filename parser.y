@@ -127,12 +127,7 @@ stmt:           assign_stmt
 
 assign_stmt:    data_type L SCOL 
                 {
-                        $$ = make_node(ast_decl_stmt,NULL,NULL);
-                        // while(stack != NULL){
-                        //         Symbol* symbol = pop();
-                        //         symbol->type = $1;
-                        //         push_symbol(symbol);
-                        // }
+                        $$ = make_node(ast_decl_stmt,NULL,$2);
                         $2->datatype = $1;
                 }
                 ;
@@ -145,9 +140,6 @@ L:              L ',' ID
                         var->symbol = symbol_init(name,-1,NULL,NULL);
                         
                         $$ = make_node(ast_var_list,$1,var);
-
-                        // $$ = symbol_init($3,-1,NULL,NULL);
-                        // push($$);
                 }
                 
                 | 
@@ -158,9 +150,6 @@ L:              L ',' ID
                         char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
                         strcpy(name, $1);
                         $$->symbol = symbol_init(name,-1,NULL,NULL);
-
-                        // $$ = symbol_init($1,-1,NULL,NULL);
-                        // push($$);
                 }
                 ;
 

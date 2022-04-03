@@ -8,6 +8,7 @@
 
 extern FILE *yyin;
 extern AST *astroot;
+extern SymbolTable *symbol_table;
 
 void traverse(AST *astroot);
 
@@ -37,10 +38,12 @@ void traverse(AST *astroot)
     {
         case ast_stmt_list:
         {
+            printf("ast_stmt_list\n");
             break;
         }
         case ast_assgn_stmt:
         {
+            printf("ast_assgn_stmt\n");
             break;
         }
         case ast_cond_stmt:
@@ -53,6 +56,7 @@ void traverse(AST *astroot)
         }
         case ast_decl_stmt:
         {
+            printf("ast_decl_stmt\n");
             break;
         }
         case ast_array_decl_stmt:
@@ -69,10 +73,13 @@ void traverse(AST *astroot)
         }
         case ast_variable_stmt:
         {
+            push_symbol(astroot->symbol);
             break;
         }
         case ast_var_list:
         {
+            astroot->left->datatype = astroot->datatype;
+            astroot->right->datatype = astroot->datatype;
             break;
         }
         case ast_aeq_stmt:

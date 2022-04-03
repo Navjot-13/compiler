@@ -13,12 +13,6 @@ AST* astroot;
 
 int yylex();
 int yyerror(char *);
-
-const int INT_TYPE = 0;
-const int DOUBLE_TYPE = 1;
-const int STR_TYPE = 2;
-const int BOOL_TYPE = 3;
-const int ARRAY_TYPE = 4;
 %}
 
 %union {

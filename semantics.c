@@ -12,6 +12,7 @@ extern SymbolTable *symbol_table;
 
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
+void typecheck(AST *astroot);
 
 int main(int argc, char *argv[])
 {
@@ -90,12 +91,7 @@ void traverse(AST *astroot)
         }
         case ast_assgn_stmt:
         {
-            
-            if (astroot->child[0]->datatype != astroot->child[1]->datatype)
-            {
-                printf("\nError: Type mismatch in assignment statement\n");
-                exit(0);
-            }
+            typecheck(astroot);
             break;
         }
         case ast_cond_stmt:
@@ -145,32 +141,32 @@ void traverse(AST *astroot)
         }
         case ast_aeq_stmt:
         {
-            
+            typecheck(astroot);
             break;
         }
         case ast_seq_stmt:
         {
-            
+            typecheck(astroot);
             break;
         }
         case ast_meq_stmt:
         {
-            
+            typecheck(astroot);
             break;
         }
         case ast_deq_stmt:
         {
-            
+            typecheck(astroot);
             break;
         }
         case ast_incr_stmt:
         {
-            
+            typecheck(astroot);
             break;
         }
         case ast_decr_stmt:
         {
-            
+            typecheck(astroot);
             break;
         }
         case ast_or_stmt:
@@ -237,5 +233,16 @@ void traverse(AST *astroot)
         {
             break;
         }
+    }
+}
+
+void typecheck(AST *astroot) {
+    if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE) {
+        astroot->child[1]->val.int_val= (int)astroot->child[1]->val.double_val;
+    } else if (astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE) {
+        astroot->child[0]->val.double_val= (double)astroot->child[1]->val.int_val;
+    } else if(astroot->child[0]->datatype != astroot->child[1]->datatype) {
+        printf("\nError: Type mismatch in assignment statement\n");
+        exit(0);
     }
 }

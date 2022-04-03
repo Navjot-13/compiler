@@ -35,6 +35,9 @@ void traverse(AST *astroot)
     if (astroot == NULL)
         return;
 
+    for (int i = 0; i < 4; i++)
+        traverse(astroot->child[i]);
+
     switch (astroot->type)
     {
         case ast_stmts:
@@ -56,7 +59,7 @@ void traverse(AST *astroot)
         }
         case ast_assgn_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_cond_stmt:
@@ -85,6 +88,7 @@ void traverse(AST *astroot)
         }
         case ast_variable_stmt:
         {
+            printf("%s\n", astroot->symbol->name);
             astroot->symbol->type = astroot->datatype;
             push_symbol(astroot->symbol);
             break;
@@ -96,34 +100,44 @@ void traverse(AST *astroot)
                     astroot->child[i]->datatype = astroot->datatype;
             break;
         }
+        case ast_var_expr:
+        {
+            Symbol *symbol = search_symbol(astroot->symbol->name);
+            if (symbol == NULL)
+            {
+                printf("\nError: Variable %s not declared\n", astroot->symbol->name);
+                exit(0);
+            }
+            break;
+        }
         case ast_aeq_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_seq_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_meq_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_deq_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_incr_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_decr_stmt:
         {
-            typecheck(astroot);
+            //typecheck(astroot);
             break;
         }
         case ast_or_stmt:
@@ -187,8 +201,6 @@ void traverse(AST *astroot)
             break;
         }
     }
-    for (int i = 0; i < 4; i++)
-        traverse(astroot->child[i]);
 }
 
 void typecheck(AST *astroot) {

@@ -40,6 +40,7 @@
 #define ast_stmts 31
 #define ast_push_scope 32
 #define ast_pop_scope 33
+#define ast_var_expr 34
 
 typedef struct AST{
         int type;

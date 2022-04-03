@@ -55,7 +55,6 @@ void traverse(AST *astroot)
         }
         case ast_assgn_stmt:
         {
-            printf("ast_assgn_stmt\n");
             break;
         }
         case ast_cond_stmt:
@@ -68,7 +67,6 @@ void traverse(AST *astroot)
         }
         case ast_decl_stmt:
         {
-            printf("ast_decl_stmt\n");
             break;
         }
         case ast_array_decl_stmt:
@@ -94,6 +92,15 @@ void traverse(AST *astroot)
             for (int i = 0; i < 4; i++)
                 if (astroot->child[i] != NULL)
                     astroot->child[i]->datatype = astroot->datatype;
+            break;
+        }
+        case ast_var_expr:
+        {
+            Symbol *symbol= search_symbol(astroot->symbol->name);
+            if (symbol == NULL) {
+                printf("Error: Undeclared variable %s\n", astroot->symbol->name);
+                exit(0);
+            }
             break;
         }
         case ast_aeq_stmt:

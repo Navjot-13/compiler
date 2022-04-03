@@ -179,11 +179,6 @@ expressions:    expr SCOL
 
 expr:           variable ASSIGN expr 
                 {
-                        Symbol *symbol = search_symbol($1->symbol->name);
-                        // if(symbol->type != $3->datatype){
-                        //         printf("Type mismatch occurred.");
-                        //         return 0;
-                        // }
                         $$ = make_node(ast_assgn_stmt,$1,$3,NULL,NULL);
                 }
                 
@@ -399,15 +394,15 @@ unary_op_stmt:  NOT unary_op_stmt
 
 variable:       ID 
                 {
-                        Symbol* symbol = search_symbol($1);
-                        if(symbol == NULL){
-                                printf("Identifier undeclared : %s\n",$1);
-                                return 0;
-                        }
-                        $$ = make_node(ast_variable_stmt,NULL,NULL,NULL,NULL);
+                        // Symbol* symbol = search_symbol($1);
+                        // if(symbol == NULL){
+                        //         printf("Identifier undeclared : %s\n",$1);
+                        //         return 0;
+                        // }
+                        $$ = make_node(ast_var_expr,NULL,NULL,NULL,NULL);
                         char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
                         strcpy(name, $1);
-                        $$->symbol = symbol_init(name,symbol->type,NULL,NULL);
+                        $$->symbol = symbol_init(name,-1,NULL,NULL);
                 }
                 
                 | ID '(' args ')' {}

@@ -73,6 +73,7 @@ void traverse(AST *astroot)
         }
         case ast_variable_stmt:
         {
+            astroot->symbol->type = astroot->type;
             push_symbol(astroot->symbol);
             break;
         }
@@ -80,8 +81,6 @@ void traverse(AST *astroot)
         {
             astroot->left->datatype = astroot->datatype;
             astroot->right->datatype = astroot->datatype;
-            astroot->left->symbol->type = astroot->datatype;
-            astroot->right->symbol->type = astroot->datatype;
             break;
         }
         case ast_aeq_stmt:

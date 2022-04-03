@@ -10,6 +10,7 @@ extern FILE *yyin;
 extern AST *astroot;
 extern SymbolTable *symbol_table;
 
+void assign_type (AST *astroot);
 void traverse(AST *astroot);
 
 int main(int argc, char *argv[])
@@ -26,7 +27,32 @@ int main(int argc, char *argv[])
     symbol_table->symbol_head = NULL;
     stack = NULL;
     yyparse();
+    assign_type(astroot);
     traverse(astroot);
+}
+
+void assign_type (AST *astroot)
+{
+    if (astroot == NULL)
+        return;
+    
+    switch (astroot->type)
+    {
+        case ast_var_list:
+        {
+            for (int i = 0; i < 4; i++) {
+                if (astroot->child[i] != NULL) {
+                    astroot->child[i]->datatype = astroot->datatype;
+                    if (astroot->child[i]->type == ast_variable_stmt) {
+                        astroot->child[i]->symbol->type = astroot->datatype;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    for (int i = 0; i < 4; i++)
+        assign_type(astroot->child[i]);
 }
 
 void traverse(AST *astroot)
@@ -103,12 +129,6 @@ void traverse(AST *astroot)
         }
         case ast_var_list:
         {
-            for (int i = 0; i < 4; i++)
-                if (astroot->child[i] != NULL)
-                {
-                    astroot->child[i]->datatype = astroot->datatype;
-                    astroot->child[i]->symbol->type = astroot->datatype;
-                }
             break;
         }
         case ast_var_expr:
@@ -210,6 +230,10 @@ void traverse(AST *astroot)
             break;
         }
         case ast_unary_sub:
+        {
+            break;
+        }
+        default:
         {
             break;
         }

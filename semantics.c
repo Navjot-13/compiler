@@ -28,15 +28,14 @@ int main(int argc, char *argv[])
     symbol_table->symbol_head = NULL;
     stack = NULL;
     yyparse();
-    assign_type(astroot);
     traverse(astroot);
 }
 
-void assign_type (AST *astroot)
+void traverse(AST *astroot)
 {
     if (astroot == NULL)
         return;
-    
+
     switch (astroot->type)
     {
         case ast_var_list:
@@ -52,14 +51,6 @@ void assign_type (AST *astroot)
             break;
         }
     }
-    for (int i = 0; i < 4; i++)
-        assign_type(astroot->child[i]);
-}
-
-void traverse(AST *astroot)
-{
-    if (astroot == NULL)
-        return;
 
     for (int i = 0; i < 4; i++)
         traverse(astroot->child[i]);

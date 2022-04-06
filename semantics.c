@@ -13,6 +13,7 @@ extern SymbolTable *symbol_table;
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
+void add_numbers(AST *astroot);
 
 int main(int argc, char *argv[])
 {
@@ -190,6 +191,7 @@ void traverse(AST *astroot)
         }
         case ast_add_stmt:
         {
+            add_numbers(astroot);
             break;
         }
         case ast_sub_stmt:
@@ -230,6 +232,25 @@ void typecheck(AST *astroot) {
         astroot->child[0]->val.double_val= (double)astroot->child[1]->val.int_val;
     } else if(astroot->child[0]->datatype != astroot->child[1]->datatype) {
         printf("\nError: Type mismatch in assignment statement\n");
+        exit(0);
+    }
+}
+
+void add_numbers(AST *astroot){
+    if(astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE){
+        astroot->datatype = DOUBLE_TYPE;
+        astroot->val.double_val = astroot->child[0]->val.double_val + astroot->child[1]->val.double_val;
+    } else if(astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE){
+        astroot->datatype = DOUBLE_TYPE;
+        astroot->val.double_val = astroot->child[0]->val.int_val + astroot->child[1]->val.double_val;
+    } else if(astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE){
+        astroot->datatype = DOUBLE_TYPE;
+        astroot->val.double_val = astroot->child[0]->val.double_val + astroot->child[1]->val.int_val;
+    } else if(astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == INT_TYPE) {
+        astroot->datatype = DOUBLE_TYPE;
+        astroot->val.int_val = astroot->child[0]->val.int_val + astroot->child[1]->val.int_val;
+    } else{
+        printf("Invalid operands for +");
         exit(0);
     }
 }

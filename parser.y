@@ -431,7 +431,7 @@ arr_variable:   ID'['expr']'
                 ;
 
 
-cond_stmt:      IF '(' expr')' '{' 
+cond_stmt:      IF '(' expr ')' '{' 
                 {
                         push_symbol_table();
                 }

@@ -1,4 +1,4 @@
-begin{
+begin {
     int i;
     decimal d;
     string str;

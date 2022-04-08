@@ -42,6 +42,8 @@
 #define ast_pop_scope 33
 #define ast_var_expr 34
 #define ast_const_val 35
+#define ast_print_stmt 36
+#define ast_input_stmt 37
 
 typedef struct AST{
         int type;

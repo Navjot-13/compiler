@@ -24,13 +24,13 @@ int yyerror(char *);
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT PRINT INPUT
 %token <int_val> INT_CONST 
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST ID
 %type<int_val> data_type comp_op
 %type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program
-expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L
+expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L print_stmt input_stmt printable
 %%
 
 program:        func_list  BGN statements 
@@ -92,6 +92,16 @@ stmt:           assign_stmt
                 {
                         $$ = $1;
                 }
+
+                | print_stmt
+                {
+                        $$ = $1;
+                }
+
+                | input_stmt
+                {
+                        $$ = $1;
+                }
                 
                 | cond_stmt 
                 
@@ -118,6 +128,34 @@ stmt:           assign_stmt
                 }
                 ;
 
+print_stmt:     PRINT '(' printable ')' SCOL
+                {
+                        $$ = make_node(ast_print_stmt,$3,NULL,NULL,NULL);
+                }
+                ;
+
+printable:      expr
+                {      
+                        $$ = $1;
+                }
+
+                | variable
+                {
+                        $$ = $1;
+                }
+
+                | constant
+                {
+                        $$ = $1;
+                }
+                ;
+
+
+input_stmt:     variable ASSIGN INPUT '(' ')' SCOL
+                {
+                       $$ = make_node(ast_input_stmt,$1,NULL,NULL,NULL);
+                }
+                ;
 
 assign_stmt:    data_type L SCOL 
                 {

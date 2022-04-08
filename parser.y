@@ -9,15 +9,10 @@
 
 Symbol *stack;
 SymbolTable* symbol_table;
+AST* astroot;
 
 int yylex();
 int yyerror(char *);
-
-const int INT_TYPE = 0;
-const int DOUBLE_TYPE = 1;
-const int STR_TYPE = 2;
-const int BOOL_TYPE = 3;
-const int ARRAY_TYPE = 4;
 %}
 
 %union {
@@ -29,18 +24,21 @@ const int ARRAY_TYPE = 4;
 }
 
 
-%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT INP
+%token ADD SUB MUL DIV ASSIGN EQ NEQ TRU FLS AND OR NOT INT DCML BOOL STR SCOL BGN AEQ MEQ SEQ DEQ INCR DECR GEQ LEQ ARR IF ELSE LP BRK RETURN CMNT MLTI_CMNT PRINT INPUT
 %token <int_val> INT_CONST 
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST ID
 %type<int_val> data_type comp_op
-%type<symbol> L
-%type<str_val> variable
-%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable
-expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt
+%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program
+expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L print_stmt input_stmt printable
 %%
 
-program:            func_list  BGN statements {printf("No problem\n");}; 
+program:        func_list  BGN statements 
+                {
+                        printf("No problem\n");
+                        astroot = $3;
+                }
+                ; 
 
 /*----------------Function Declaration ----------------------*/
 func_list:          func_list function|  ;
@@ -65,10 +63,10 @@ arg_list:           arg_list',' expr
 
 
 /*------------------Statement Declaration---------------------*/
-statements:             { push_symbol_table(); }
-                        '{' stmt_list '}' {
-                               $$ = $3;
-                               pop_symbol_table();
+statements:             '{' stmt_list '}' {
+                                AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                                AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                                $$ = make_node(ast_stmts,push,$2,pop,NULL);
                         }
                     | 
                         { push_symbol_table(); }
@@ -80,17 +78,27 @@ statements:             { push_symbol_table(); }
 
 stmt_list:      stmt_list stmt 
                 {
-                        $$ = make_node(ast_stmt_list,$2,$1);
+                        $$ = make_node(ast_stmt_list,$1,$2,NULL,NULL);
                 }
                 
                 | stmt  
                 
                 {
-                        $$ = make_node(ast_stmt_list,NULL,NULL);
+                        $$ = $1;
                 }
                 ;
 
 stmt:           assign_stmt 
+                {
+                        $$ = $1;
+                }
+
+                | print_stmt
+                {
+                        $$ = $1;
+                }
+
+                | input_stmt
                 {
                         $$ = $1;
                 }
@@ -120,36 +128,66 @@ stmt:           assign_stmt
                 }
                 ;
 
+print_stmt:     PRINT '(' printable ')' SCOL
+                {
+                        $$ = make_node(ast_print_stmt,$3,NULL,NULL,NULL);
+                }
+                ;
+
+printable:      expr
+                {      
+                        $$ = $1;
+                }
+
+                | variable
+                {
+                        $$ = $1;
+                }
+
+                | constant
+                {
+                        $$ = $1;
+                }
+                ;
+
+
+input_stmt:     variable ASSIGN INPUT '(' ')' SCOL
+                {
+                       $$ = make_node(ast_input_stmt,$1,NULL,NULL,NULL);
+                }
+                ;
 
 assign_stmt:    data_type L SCOL 
                 {
-                        $$ = make_node(ast_assgn_stmt,NULL,NULL);
-                        while(stack != NULL){
-                                Symbol* symbol = pop();
-                                symbol->type = $1;
-                                push_symbol(symbol);
-                        }
+                        $$ = make_node(ast_decl_stmt,$2,NULL,NULL,NULL);
+                        $2->datatype = $1;
                 }
                 ;
 
 L:              L ',' ID 
-                {
-                        $$ = symbol_init($3,-1,NULL,NULL);
-                        push($$);
+                {       
+                        AST* var = make_node(ast_variable_stmt,NULL,NULL,NULL,NULL);
+                        char *name = (char*)malloc((strlen($3)+1)*sizeof(char));
+                        strcpy(name, $3);
+                        var->symbol = symbol_init(name,-1,NULL,NULL);
+                        
+                        $$ = make_node(ast_var_list,$1,var,NULL,NULL);
                 }
                 
                 | 
                 
                 ID      
                 {
-                        $$ = symbol_init($1,-1,NULL,NULL);
-                        push($$);
+                        $$ = make_node(ast_variable_stmt,NULL,NULL,NULL,NULL);
+                        char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
+                        strcpy(name, $1);
+                        $$->symbol = symbol_init(name,-1,NULL,NULL);
                 }
                 ;
 
 array_decl:     ARR '<' X ',' INT_CONST'>' ID SCOL
                 {
-                        $$ = make_node(ast_array_decl_stmt,NULL,NULL);
+                        $$ = make_node(ast_array_decl_stmt,NULL,NULL,NULL,NULL);
                 }
                 ;
 X:              ARR '<' X ',' INT_CONST '>' 
@@ -173,84 +211,65 @@ expressions:    expr SCOL
 
 expr:           variable ASSIGN expr 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        if(symbol->type != $3->datatype){
-                                printf("Type mismatch occurred.");
-                                return 0;
-                        }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_assgn_stmt,ast,$3);
+                        $$ = make_node(ast_assgn_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable AEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        if(symbol->type != $3->datatype){
-                                printf("Type mismatch occurred.");
-                                return 0;
-                        }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_aeq_stmt,ast,$3);
+                        Symbol *symbol = search_symbol($1->symbol->name);
+                        // if(symbol->type != $3->datatype){
+                        //         printf("Type mismatch occurred.");
+                        //         return 0;
+                        // }
+                        $$ = make_node(ast_aeq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable SEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        if(symbol->type != $3->datatype){
-                                printf("Type mismatch occurred.");
-                                return 0;
-                        }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_seq_stmt,ast,$3);
+                        Symbol *symbol = search_symbol($1->symbol->name);
+                        // if(symbol->type != $3->datatype){
+                        //         printf("Type mismatch occurred.");
+                        //         return 0;
+                        // }
+                        $$ = make_node(ast_seq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable MEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        if(symbol->type != $3->datatype){
-                                printf("Type mismatch occurred.");
-                                return 0;
-                        }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_meq_stmt,ast,$3);
+                        Symbol *symbol = search_symbol($1->symbol->name);
+                        // if(symbol->type != $3->datatype){
+                        //         printf("Type mismatch occurred.");
+                        //         return 0;
+                        // }
+                        $$ = make_node(ast_meq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable DEQ expr 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        if(symbol->type != $3->datatype){
-                                printf("Type mismatch occurred.");
-                                return 0;
-                        }
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_deq_stmt,ast,$3);
+                        Symbol *symbol = search_symbol($1->symbol->name);
+                        // if(symbol->type != $3->datatype){
+                        //         printf("Type mismatch occurred.");
+                        //         return 0;
+                        // }
+                        $$ = make_node(ast_deq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | variable INCR 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_incr_stmt,ast,NULL);
+                        Symbol *symbol = search_symbol($1->symbol->name);
+                        $$ = make_node(ast_incr_stmt,$1,NULL,NULL,NULL);
                 }
                 
                 | variable DECR 
                 
                 {
-                        Symbol *symbol = search_symbol($1);
-                        AST *ast = make_node(ast_variable_stmt,NULL,NULL);
-                        ast->symbol = symbol_init($1,symbol->type,NULL,NULL);
-                        $$ = make_node(ast_decr_stmt,ast,NULL);
+                        Symbol *symbol = search_symbol($1->symbol->name);
+                        $$ = make_node(ast_decr_stmt,$1,NULL,NULL,NULL);
                 }
                 
                 | cond_or_stmt 
@@ -262,7 +281,7 @@ expr:           variable ASSIGN expr
 
 cond_or_stmt:   cond_or_stmt OR cond_and_stmt 
                 {
-                        $$ = make_node(ast_or_stmt,$1,$3);
+                        $$ = make_node(ast_or_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | cond_and_stmt 
@@ -274,7 +293,7 @@ cond_or_stmt:   cond_or_stmt OR cond_and_stmt
 
 cond_and_stmt:  cond_and_stmt AND eql_stmt 
                 {
-                        $$ = make_node(ast_and_stmt,$1,$3);
+                        $$ = make_node(ast_and_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | eql_stmt 
@@ -286,13 +305,13 @@ cond_and_stmt:  cond_and_stmt AND eql_stmt
 
 eql_stmt:       eql_stmt EQ comp_stmt 
                 {
-                        $$ = make_node(ast_eq_stmt,$1,$3);
+                        $$ = make_node(ast_eq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | eql_stmt NEQ comp_stmt 
                 
                 {
-                        $$ = make_node(ast_neq_stmt,$1,$3);
+                        $$ = make_node(ast_neq_stmt,$1,$3,NULL,NULL);
                 }
                 
                 | comp_stmt 
@@ -304,7 +323,7 @@ eql_stmt:       eql_stmt EQ comp_stmt
 
 comp_stmt:      comp_stmt comp_op arithmetic_stmt1 
                 {
-                        $$ = make_node($2,$1,$3);
+                        $$ = make_node($2,$1,$3,NULL,NULL);
                 }
                 
                 | arithmetic_stmt1 
@@ -340,14 +359,14 @@ comp_op:        '>'
 
 arithmetic_stmt1:       arithmetic_stmt1 ADD arithmetic_stmt2   
                         {
-                                $$ = make_node(ast_add_stmt,$1,$3);
+                                $$ = make_node(ast_add_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | 
                         
                         arithmetic_stmt1 SUB arithmetic_stmt2 
                         {
-                                $$ = make_node(ast_sub_stmt,$1,$3);
+                                $$ = make_node(ast_sub_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | 
@@ -359,13 +378,13 @@ arithmetic_stmt1:       arithmetic_stmt1 ADD arithmetic_stmt2
 
 arithmetic_stmt2:       arithmetic_stmt2 MUL unary_op_stmt 
                         {
-                                $$ = make_node(ast_mul_stmt,$1,$3);
+                                $$ = make_node(ast_mul_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | arithmetic_stmt2 DIV unary_op_stmt 
                         
                         {
-                                $$ = make_node(ast_div_stmt,$1,$3);
+                                $$ = make_node(ast_div_stmt,$1,$3,NULL,NULL);
                         }
                         
                         | unary_op_stmt 
@@ -377,19 +396,19 @@ arithmetic_stmt2:       arithmetic_stmt2 MUL unary_op_stmt
 
 unary_op_stmt:  NOT unary_op_stmt 
                 {
-                        $$ = make_node(ast_unary_not,$2,NULL);
+                        $$ = make_node(ast_unary_not,$2,NULL,NULL,NULL);
                 }
                 
                 | ADD unary_op_stmt 
                 
                 {
-                        $$ = make_node(ast_unary_add,$2,NULL);
+                        $$ = make_node(ast_unary_add,$2,NULL,NULL,NULL);
                 }
                 
                 | SUB unary_op_stmt 
                 
                 {
-                        $$ = make_node(ast_unary_sub,$2,NULL);
+                        $$ = make_node(ast_unary_sub,$2,NULL,NULL,NULL);
                 }
                 
                 | variable 
@@ -407,11 +426,15 @@ unary_op_stmt:  NOT unary_op_stmt
 
 variable:       ID 
                 {
-                        Symbol* symbol = search_symbol($1);
-                        if(symbol == NULL){
-                                printf("Identifier undeclared : %s\n",$1);
-                                return 0;
-                        }
+                        // Symbol* symbol = search_symbol($1);
+                        // if(symbol == NULL){
+                        //         printf("Identifier undeclared : %s\n",$1);
+                        //         return 0;
+                        // }
+                        $$ = make_node(ast_var_expr,NULL,NULL,NULL,NULL);
+                        char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
+                        strcpy(name, $1);
+                        $$->symbol = symbol_init(name,-1,NULL,NULL);
                 }
                 
                 | ID '(' args ')' {}
@@ -426,25 +449,27 @@ variable:       ID
 
 arr_variable:   ID'['expr']'
                 {
-                        $$ = make_node(ast_arry_assgn_stmt,$3,NULL);
+                        $$ = make_node(ast_arry_assgn_stmt,$3,NULL,NULL,NULL);
                         Symbol* symbol = search_symbol($1);
                         if(symbol == NULL){
                                 printf("Identifier undeclared : %s\n",$1);
                                 return 0;
                         }
-                        $$->symbol = symbol_init($1,symbol->type,NULL,NULL);   
+                        char *name = (char*)malloc((strlen($1)+1)*sizeof(char));
+                        strcpy(name, $1);
+                        $$->symbol = symbol_init(name,symbol->type,NULL,NULL);   
                 }
                 
                 | arr_variable '['expr']'
 
                 {
-                        $$ = make_node(ast_arry_assgn_stmt,$1,$3);
+                        $$ = make_node(ast_arry_assgn_stmt,$1,$3,NULL,NULL);
                         $$->symbol = $1->symbol;
                 }
                 ;
 
 
-cond_stmt:      IF '(' expr')' '{' 
+cond_stmt:      IF '(' expr ')' '{' 
                 {
                         push_symbol_table();
                 }
@@ -467,7 +492,7 @@ cond_stmt2:         ELSE
 
 
 loop_stmt:          LP '(' expr ')' statements {    
-                                $$ = make_node(ast_loop_stmt,$3,$5);
+                                $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
                         }
                     ;
 
@@ -497,22 +522,25 @@ data_type:      INT
 
 constant:       INT_CONST 
                 {
-                        $$ = (AST*) malloc(sizeof(AST));
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
                         $$->val.int_val = $1;
+                        $$->datatype = INT_TYPE;
                 }
 
                 | DCML_CONST 
 
                 {
-                        $$ = (AST*) malloc(sizeof(AST));
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
                         $$->val.double_val = $1;
+                        $$->datatype = DOUBLE_TYPE;
                 }
 
                 | STR_CONST
 
                 {
-                        $$ = (AST*) malloc(sizeof(AST));
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
                         strcpy($$->val.str_val,$1);
+                        $$->datatype = STR_TYPE;
                 }
                 
                 | TRU {}

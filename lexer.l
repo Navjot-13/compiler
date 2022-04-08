@@ -29,8 +29,6 @@ letter_ [A-Za-z_]
 
 ";"				                return SCOL;
 
-"@"                             return INP;
-
 "<"                             return '<';
 
 ">"                             return '>';
@@ -71,6 +69,10 @@ letter_ [A-Za-z_]
 
 "="   			                return ASSIGN;
 
+"input"                         return INPUT;
+
+"print"                         return PRINT;
+
 "break"                         return BRK;
 
 "true"                          return TRU;
@@ -95,7 +97,9 @@ letter_ [A-Za-z_]
 
 "return"                        return RETURN;
 
-##.*                                  
+"##.*"                          { return CMNT; }
+
+"#\*(\*(?!#)|[^*])*\*#"         { return MLTI_CMNT; }
 
 \".*\"|\'.*\'                   { strcpy(yylval.str_val, yytext); return STR_CONST; }
 

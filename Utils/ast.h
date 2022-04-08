@@ -42,11 +42,14 @@
 #define ast_pop_scope 33
 #define ast_var_expr 34
 #define ast_const_val 35
+#define ast_array_stmt 36
+#define ast_array_datatype_stmt 37
 
 typedef struct AST{
         int type;
         int datatype;
         Symbol *symbol;
+        int size;
         union {
                 int int_val;
                 double double_val;

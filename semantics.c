@@ -13,7 +13,7 @@ extern SymbolTable *symbol_table;
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
-void add_numbers(AST *astroot);
+void binary_op_type_checking(AST *astroot);
 
 int main(int argc, char *argv[])
 {
@@ -78,6 +78,9 @@ void traverse(AST *astroot)
         }
         case ast_assgn_stmt:
         {
+            astroot->val = astroot->child[1]->val;
+            astroot->datatype = astroot->child[0]->datatype;
+            // printf("%d  %d\n",astroot->child[0]->datatype,astroot->child[1]->datatype);
             typecheck(astroot);
             break;
         }
@@ -91,17 +94,38 @@ void traverse(AST *astroot)
         }
         case ast_decl_stmt:
         {
+            
             break;
         }
         case ast_array_decl_stmt:
         {
+            push_symbol(astroot->symbol);
+            printf("Array size: %d\n",astroot->symbol->size);
             break;
         }
         case ast_expressions_stmt:
         {
+
             break;
         }
         case ast_arry_assgn_stmt:
+        {
+            Symbol *symbol = search_symbol(astroot->symbol->name);
+            if(symbol == NULL){
+                printf("Identifier undeclared\n");
+            }
+            if(symbol->is_array != 1){
+                printf("Identifier not an array type.\n");
+                exit(0);
+            }
+            if(symbol->size <= astroot->child[0]->val.int_val){
+                printf("Array out of bounds.\n");
+                exit(0);
+            }
+            astroot->datatype = symbol->type;
+            break;
+        }
+        case ast_array_stmt:
         {
             break;
         }
@@ -127,36 +151,36 @@ void traverse(AST *astroot)
             astroot->datatype = symbol->type;
             break;
         }
-        case ast_aeq_stmt:
-        {
-            typecheck(astroot);
-            break;
-        }
-        case ast_seq_stmt:
-        {
-            typecheck(astroot);
-            break;
-        }
-        case ast_meq_stmt:
-        {
-            typecheck(astroot);
-            break;
-        }
-        case ast_deq_stmt:
-        {
-            typecheck(astroot);
-            break;
-        }
-        case ast_incr_stmt:
-        {
-            typecheck(astroot);
-            break;
-        }
-        case ast_decr_stmt:
-        {
-            typecheck(astroot);
-            break;
-        }
+        // case ast_aeq_stmt:
+        // {
+        //     binary_op_type_checking(astroot);
+        //     break;
+        // }
+        // case ast_seq_stmt:
+        // {
+        //     binary_op_type_checking(astroot);
+        //     break;
+        // }
+        // case ast_meq_stmt:
+        // {
+        //     binary_op_type_checking(astroot);
+        //     break;
+        // }
+        // case ast_deq_stmt:
+        // {
+        //     binary_op_type_checking(astroot);
+        //     break;
+        // }
+        // case ast_incr_stmt:
+        // {
+        //     typecheck(astroot);
+        //     break;
+        // }
+        // case ast_decr_stmt:
+        // {
+        //     typecheck(astroot);
+        //     break;
+        // }
         case ast_or_stmt:
         {
             break;
@@ -191,19 +215,22 @@ void traverse(AST *astroot)
         }
         case ast_add_stmt:
         {
-            add_numbers(astroot);
+            binary_op_type_checking(astroot);
             break;
         }
         case ast_sub_stmt:
         {
+            binary_op_type_checking(astroot);
             break;
         }
         case ast_mul_stmt:
         {
+            binary_op_type_checking(astroot);
             break;
         }
         case ast_div_stmt:
         {
+            binary_op_type_checking(astroot);
             break;
         }
         case ast_unary_not:
@@ -218,6 +245,11 @@ void traverse(AST *astroot)
         {
             break;
         }
+        case ast_const_val:
+        {
+            
+            break;
+        }
         default:
         {
             break;
@@ -228,15 +260,17 @@ void traverse(AST *astroot)
 void typecheck(AST *astroot) {
     if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE) {
         astroot->child[1]->val.int_val= (int)astroot->child[1]->val.double_val;
+        astroot->datatype = INT_TYPE;
     } else if (astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE) {
         astroot->child[0]->val.double_val= (double)astroot->child[1]->val.int_val;
+        astroot->datatype = DOUBLE_TYPE;
     } else if(astroot->child[0]->datatype != astroot->child[1]->datatype) {
         printf("\nError: Type mismatch in assignment statement\n");
         exit(0);
     }
 }
 
-void add_numbers(AST *astroot){
+void binary_op_type_checking(AST *astroot){
     if(astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE){
         astroot->datatype = DOUBLE_TYPE;
         astroot->val.double_val = astroot->child[0]->val.double_val + astroot->child[1]->val.double_val;

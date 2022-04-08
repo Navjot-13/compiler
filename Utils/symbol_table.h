@@ -7,14 +7,15 @@
 
 #define INT_TYPE 0
 #define DOUBLE_TYPE 1
-#define STR_TYPE 2;
-#define BOOL_TYPE 3;
-#define ARRAY_TYPE 4;
+#define STR_TYPE 2
+#define BOOL_TYPE 3
+#define ARRAY_TYPE 4
 
 // Stores the information of one variable
 typedef struct Symbol {
     char* name;
     int type;
+    int is_array;
     int size;
     struct Symbol* prev;
     struct Symbol* next;

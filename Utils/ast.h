@@ -44,6 +44,8 @@
 #define ast_const_val 35
 #define ast_array_stmt 36
 #define ast_array_datatype_stmt 37
+#define ast_print_stmt 38
+#define ast_input_stmt 39
 
 typedef struct AST{
         int type;

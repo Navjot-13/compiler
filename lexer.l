@@ -29,8 +29,6 @@ letter_ [A-Za-z_]
 
 ";"				                return SCOL;
 
-"@"                             return INP;
-
 "<"                             return '<';
 
 ">"                             return '>';
@@ -70,6 +68,10 @@ letter_ [A-Za-z_]
 "/"				                return DIV;
 
 "="   			                return ASSIGN;
+
+"input"                         return INPUT;
+
+"print"                         return PRINT;
 
 "break"                         return BRK;
 

@@ -1,4 +1,20 @@
+int add(int a,int b){
+    if(b > 0){
+        ifloop(a > 0){
+            a++;
+        }
+    } else if (b == 0){
+        int v;
+        a = a + v;
+    }
+    else{
+        a += 2;
+    }
+    bool c;
+    c = true;
+    return a + b;
+}
+
 begin {
-    int a;
-    a = a + 1;
+    
 }

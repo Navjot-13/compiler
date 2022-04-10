@@ -15,6 +15,7 @@
 typedef struct Symbol {
     char* name;
     int type;
+    int is_function;
     int is_array;
     int size;
     struct Symbol* prev;

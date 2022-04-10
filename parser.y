@@ -29,29 +29,79 @@ int yyerror(char *);
 %token <double_val> DCML_CONST
 %token <str_val> STR_CONST ID
 %type<int_val> data_type comp_op
-%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program X
+%type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program X func_list function params param_list param_type cond_stmt2
 expressions expr cond_or_stmt cond_and_stmt eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L print_stmt input_stmt printable
 %%
 
 program:        func_list  BGN statements 
                 {
                         printf("No problem\n");
-                        astroot = $3;
+                        astroot = make_node(ast_start_stmt,$1,$3,NULL,NULL);
                 }
                 ; 
 
 /*----------------Function Declaration ----------------------*/
-func_list:          func_list function|  ;
+func_list:      func_list function
+                {
+                        $$ = make_node(ast_func_list_stmt,$1,$2,NULL,NULL);
+                }
 
-function:           data_type ID '(' params ')' statements;
+                |
 
-params:             param_list
-                    | ;
+                {
+                        $$ = NULL;
+                }
+                
+                ;
 
-param_list:         param_list',' param_type 
-                    | param_type;
+function:       data_type ID '(' params ')' statements
+                {
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_func_stmt,push,$4,$6,pop);
+                        char *name = (char*)malloc((strlen($2)+1)*sizeof(char));
+                        strcpy(name, $2);
+                        $$->symbol = symbol_init(name,$1,NULL,NULL);
+                        $$->symbol->is_function = 1;
+                }
 
-param_type:         data_type ID;
+                ;
+
+params:         param_list
+                {
+                        $$ = $1;
+                }
+
+                |
+
+                {
+                        $$ = NULL;
+                }
+                
+                ;
+
+param_list:     param_list',' param_type
+                {
+                        $$ = make_node(ast_param_list_stmt,$1,$3,NULL,NULL);
+                }
+
+                | param_type
+                
+                {
+                        $$ = make_node(ast_param_list_stmt,NULL,$1,NULL,NULL);
+                }
+                
+                ;
+
+param_type:     data_type ID
+                {
+                        $$ = make_node(ast_param_stmt,NULL,NULL,NULL,NULL);
+                        char *name = (char*)malloc((strlen($2)+1)*sizeof(char));
+                        strcpy(name, $2);
+                        $$->symbol = symbol_init(name,$1,NULL,NULL);
+                }
+
+                ;
 
 args:               arg_list
                     | ;
@@ -63,28 +113,28 @@ arg_list:           arg_list',' expr
 
 
 /*------------------Statement Declaration---------------------*/
-statements:             '{' stmt_list '}' {
-                                AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
-                                AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                                $$ = make_node(ast_stmts,push,$2,pop,NULL);
-                        }
-                    | 
-                        { push_symbol_table(); }
-                        stmt {
-                                $$ = $2;
-                                pop_symbol_table();
-                        }
-                    ;
+statements:     '{' stmt_list '}' {
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_stmts,push,$2,pop,NULL);
+                }
+                
+                |
+                
+                {
+                        $$ = NULL;
+                }
+                ;
 
-stmt_list:      stmt_list stmt 
+stmt_list:      stmt stmt_list 
                 {
                         $$ = make_node(ast_stmt_list,$1,$2,NULL,NULL);
                 }
                 
-                | stmt  
+                |  
                 
                 {
-                        $$ = $1;
+                        $$ = NULL;
                 }
                 ;
 
@@ -94,11 +144,13 @@ stmt:           assign_stmt
                 }
 
                 | print_stmt
+                
                 {
                         $$ = $1;
                 }
 
                 | input_stmt
+                
                 {
                         $$ = $1;
                 }
@@ -125,6 +177,12 @@ stmt:           assign_stmt
                 
                 {
                         $$ = $1;
+                }
+
+                | RETURN expr SCOL
+
+                {
+                        $$ = make_node(ast_return_stmt,$2,NULL,NULL,NULL);
                 }
                 ;
 
@@ -487,32 +545,46 @@ arr_variable:   ID'['expr']'
                 ;
 
 
-cond_stmt:      IF '(' expr ')' '{' 
+cond_stmt:      IF '(' expr ')' '{' stmt_list '}' cond_stmt2
                 {
-                        push_symbol_table();
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        AST* ast_if = make_node(ast_if_stmt,$3,push,$6,pop);
+                        $$ = make_node(ast_cond_stmt,ast_if,$8,NULL,NULL);
                 }
-                stmt_list
+
+                ;
+
+cond_stmt2:     ELSE '{' stmt_list '}'
                 {
-                        pop_symbol_table();
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_cond_stmt,push,$3,pop,NULL);
                 }
-                '}' cond_stmt2 {};
+                
+                | ELSE cond_stmt
 
-cond_stmt2:         ELSE
-                        {
-                                push_symbol_table();
-                        }
-                        stmt 
-                        {
-                                pop_symbol_table();
-                        }
-                        | ;
+                {
+                        $$ = $2;
+                }
+
+                |
+
+                {
+                        $$ = NULL;
+                }
+
+                ;
 
 
 
-loop_stmt:          LP '(' expr ')' statements {    
-                                $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
-                        }
-                    ;
+loop_stmt:      LP '(' expr ')' statements 
+                {
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_loop_stmt,$3,push,$5,pop);
+                }
+                ;
 
 
 data_type:      INT 
@@ -561,8 +633,22 @@ constant:       INT_CONST
                         $$->datatype = STR_TYPE;
                 }
                 
-                | TRU {}
-                | FLS {};
+                | TRU 
+                
+                {
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
+                        $$->val.bool_val = true;
+                        $$->datatype = BOOL_TYPE;
+                }
+
+                | FLS
+                
+                {
+                        $$ = make_node(ast_const_val,NULL,NULL,NULL,NULL);
+                        $$->val.bool_val = false;
+                        $$->datatype = BOOL_TYPE;
+                }
+                ;
 /*------------------------------------------------------------*/
 
 %%

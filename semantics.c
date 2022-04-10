@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
     fprintf(fp,"begin:\n");
-    printf("open\n");
     traverse(astroot);
 }
 
@@ -79,6 +78,27 @@ void traverse(AST *astroot)
             pop_symbol_table();
             break;
         }
+        case ast_start_stmt:
+        {
+            break;
+        }
+        case ast_func_stmt:
+        {
+            break;
+        }
+        case ast_func_list_stmt:
+        {
+            break;
+        }
+        case ast_param_list_stmt:
+        {
+            break;
+        }
+        case ast_param_stmt:
+        {
+            push_symbol(astroot->symbol);
+            break;
+        }
         case ast_stmt_list:
         {
             break;
@@ -87,7 +107,6 @@ void traverse(AST *astroot)
         {
             astroot->val = astroot->child[1]->val;
             astroot->datatype = astroot->child[0]->datatype;
-            // printf("%d  %d\n",astroot->child[0]->datatype,astroot->child[1]->datatype);
             typecheck(astroot);
             break;
         }
@@ -101,7 +120,6 @@ void traverse(AST *astroot)
         }
         case ast_decl_stmt:
         {
-            
             break;
         }
         case ast_array_decl_stmt:
@@ -139,6 +157,11 @@ void traverse(AST *astroot)
         case ast_variable_stmt:
         {
             astroot->symbol->type = astroot->datatype;
+            Symbol* symbol = search_symbol(astroot->symbol->name);
+            if(symbol != NULL){
+                printf("Identified %s already declared in current scope\n",symbol->name);
+                exit(0);
+            }
             push_symbol(astroot->symbol);
             fprintf(fp,"    la $sp, -8($sp)\n");
             fprintf(fp,"    sw $fp, 4($sp)\n");

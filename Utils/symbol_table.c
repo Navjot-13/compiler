@@ -98,5 +98,7 @@ Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     new_symbol->type = type;
     new_symbol->prev = prev;
     new_symbol->next = next;
+    new_symbol->is_function = -1;
+    new_symbol->is_array = -1;
     return new_symbol;
 }

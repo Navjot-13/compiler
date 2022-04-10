@@ -18,6 +18,7 @@ typedef struct Symbol {
     int is_function;
     int is_array;
     int size;
+    struct Symbol* param_list;// formal parameters for when the symbol is a function
     struct Symbol* prev;
     struct Symbol* next;
 } Symbol;
@@ -31,11 +32,15 @@ typedef struct SymbolTable {
     struct SymbolTable* prev;
 } SymbolTable;
 
+extern SymbolTable* global_symbol_table; // Symbol table for global scope
 extern SymbolTable* symbol_table;  // Symbol table for current scope
+
 
 Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next);
 
 void push_symbol(Symbol* symbol);
+
+void push_global_symbol(Symbol* symbol);
 
 Symbol* search_symbol(char* id);
 

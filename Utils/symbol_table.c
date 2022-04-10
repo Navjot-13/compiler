@@ -49,6 +49,7 @@ void push_symbol_table() {
         symbol_table->prev = NULL;
         symbol_table->next = NULL;
         symbol_table->symbol_head = NULL;
+        global_symbol_table = symbol_table;
     } else {
         symbol_table->next = (SymbolTable*) malloc(sizeof(SymbolTable));
         symbol_table->next->prev = symbol_table;
@@ -91,6 +92,21 @@ void push_symbol(Symbol* symbol) {
     }
 }
 
+void push_global_symbol(Symbol* symbol) {
+    if (global_symbol_table->symbol_head == NULL) {
+        // symbol_table->symbol_head = symbol_init(symbol->name, symbol->type, NULL, NULL);
+        global_symbol_table->symbol_head = symbol;
+    } else {
+        // I changed function check once
+        Symbol* cur_symbol = global_symbol_table->symbol_head;
+        while (cur_symbol->next != NULL) {
+            cur_symbol = cur_symbol->next;
+        }
+        // cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
+        cur_symbol->next = symbol;
+    }
+}
+
 Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     Symbol* new_symbol = (Symbol*)malloc(sizeof(Symbol));
     new_symbol->name = (char*)malloc((strlen(name)+1) * sizeof(char));
@@ -100,5 +116,6 @@ Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     new_symbol->next = next;
     new_symbol->is_function = -1;
     new_symbol->is_array = -1;
+    new_symbol->param_list = NULL;
     return new_symbol;
 }

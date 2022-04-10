@@ -8,6 +8,7 @@
 
 extern FILE *yyin;
 extern AST *astroot;
+extern SymbolTable* global_symbol_table;
 extern SymbolTable *symbol_table;
 FILE *fp;
 
@@ -15,6 +16,7 @@ void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
 void binary_op_type_checking(AST *astroot);
+void add_params(AST* astroot);
 
 int main(int argc, char *argv[])
 {
@@ -28,7 +30,8 @@ int main(int argc, char *argv[])
     symbol_table->prev = NULL;
     symbol_table->next = NULL;
     symbol_table->symbol_head = NULL;
-    stack = NULL;
+    global_symbol_table = symbol_table;
+    // stack = NULL;
     yyparse();
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
@@ -84,6 +87,7 @@ void traverse(AST *astroot)
         }
         case ast_func_stmt:
         {
+            add_params(astroot);
             break;
         }
         case ast_func_list_stmt:
@@ -97,6 +101,7 @@ void traverse(AST *astroot)
         case ast_param_stmt:
         {
             push_symbol(astroot->symbol);
+
             break;
         }
         case ast_stmt_list:
@@ -336,4 +341,21 @@ void binary_op_type_checking(AST *astroot){
         printf("Invalid operands for +");
         exit(0);
     }
+}
+
+void add_params(AST* astroot){
+    AST* params = astroot->child[1];
+    Symbol* func = astroot->symbol;
+    Symbol* cur_param = func->param_list;
+    while(params != NULL){
+        if(cur_param == NULL){
+            cur_param = params->child[1]->symbol;
+        } else{
+            cur_param->next = params->child[1]->symbol;
+            cur_param->next->prev = cur_param;
+            cur_param = cur_param->next;
+        }
+        params = params->child[0];
+    }
+    push_global_symbol(func);// push the function symbol to the global scope
 }

@@ -139,21 +139,10 @@ printable:      expr
                         $$ = $1;
                 }
 
-                | variable
-                {
-                        $$ = $1;
-                }
-
-                | constant
-                {
-                        $$ = $1;
-                }
-                ;
-
 
 input_stmt:     variable ASSIGN INPUT '(' ')' SCOL
                 {
-                       $$ = make_node(ast_input_stmt,$1,NULL,NULL,NULL);
+                       $$ = $1;
                 }
                 ;
 
@@ -352,6 +341,7 @@ eql_stmt:       eql_stmt EQ comp_stmt
 comp_stmt:      comp_stmt comp_op arithmetic_stmt1 
                 {
                         $$ = make_node($2,$1,$3,NULL,NULL);
+                        $$->datatype = BOOL_TYPE;
                 }
                 
                 | arithmetic_stmt1 
@@ -477,7 +467,7 @@ variable:       ID
 
 arr_variable:   ID'['expr']'
                 {
-                        $$ = make_node(ast_arry_assgn_stmt,$3,NULL,NULL,NULL);
+                        $$ = make_node(ast_arry_assgn_stmt,NULL,$3,NULL,NULL);
                         // Symbol* symbol = search_symbol($1);
                         // if(symbol == NULL){
                         //         printf("Identifier undeclared : %s\n",$1);

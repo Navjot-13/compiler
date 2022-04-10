@@ -1,4 +1,4 @@
 begin {
-    array<array<array<int,5>,4>,4> a;
-    a[100] = 0;
+    int a;
+    a = a + 1;
 }

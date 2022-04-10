@@ -9,6 +9,7 @@
 extern FILE *yyin;
 extern AST *astroot;
 extern SymbolTable *symbol_table;
+FILE *fp;
 
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
@@ -29,6 +30,12 @@ int main(int argc, char *argv[])
     symbol_table->symbol_head = NULL;
     stack = NULL;
     yyparse();
+    fp = fopen("assembly.asm","w+");
+    fprintf(fp,"    .data\n");
+    fprintf(fp,"    .text\n");
+    fprintf(fp,"    .globl main\n");
+    fprintf(fp,"begin:\n");
+    printf("open\n");
     traverse(astroot);
 }
 
@@ -118,8 +125,8 @@ void traverse(AST *astroot)
                 printf("Identifier not an array type.\n");
                 exit(0);
             }
-            if(symbol->size <= astroot->child[0]->val.int_val){
-                printf("Array out of bounds.\n");
+            if(astroot->child[1]->datatype != INT_TYPE){
+                printf("array subscript not an integer\n");
                 exit(0);
             }
             astroot->datatype = symbol->type;
@@ -133,6 +140,11 @@ void traverse(AST *astroot)
         {
             astroot->symbol->type = astroot->datatype;
             push_symbol(astroot->symbol);
+            fprintf(fp,"    la $sp, -8($sp)\n");
+            fprintf(fp,"    sw $fp, 4($sp)\n");
+            fprintf(fp,"    sw $ra, 0($sp)\n");
+            fprintf(fp,"    la $fp, 0($sp)\n");
+            fprintf(fp,"    la $sp, -4($sp)\n");
             break;
         }
         case ast_var_list:
@@ -216,6 +228,8 @@ void traverse(AST *astroot)
         case ast_add_stmt:
         {
             binary_op_type_checking(astroot);
+            fprintf(fp,"    la $s1, -4($fp)\n");
+            fprintf(fp,"    lw $s2, ($s1)\n");
             break;
         }
         case ast_sub_stmt:
@@ -249,6 +263,18 @@ void traverse(AST *astroot)
         {
             
             break;
+        }
+        case ast_print_stmt:
+        {
+
+        }
+        case ast_input_stmt:
+        {
+            Symbol *symbol = search_symbol(astroot->symbol->name);
+            if(symbol == NULL){
+                printf("Identifier undeclared\n");
+                exit(0);
+            }
         }
         default:
         {

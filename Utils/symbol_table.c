@@ -4,38 +4,6 @@
 #include "symbol_table.h"
 
 
-Symbol* pop() {
-    if (stack == NULL) {
-        printf("Stack is empty!!");
-        return NULL;
-    }
-    Symbol* cur_symbol = stack;
-    while (cur_symbol->next != NULL) {
-        cur_symbol = cur_symbol->next;
-    }
-    if (cur_symbol->prev) {
-        cur_symbol->prev->next = NULL;
-    } else {
-        stack = NULL;
-    }
-    return cur_symbol;
-}
-
-void push(Symbol* symbol) {
-    char *name = (char*)malloc((strlen(symbol->name)+1)*sizeof(char));
-    strcpy(name, symbol->name);
-    if (stack == NULL) {
-        stack = symbol_init(name, symbol->type, NULL, NULL);
-    } else {
-        // I changed function check once
-        Symbol* cur_symbol = stack;
-        while (cur_symbol->next != NULL) {
-            cur_symbol = cur_symbol->next;
-        }
-        cur_symbol->next = symbol_init(name, symbol->type, cur_symbol, NULL);
-    }
-}
-
 void pop_symbol_table() {
     SymbolTable* latest_symbol_table = symbol_table->prev;
     free(symbol_table);
@@ -60,20 +28,36 @@ void push_symbol_table() {
 }
 
 Symbol* search_symbol(char* id) {
-    printf("Search: %s\n",id);
+    // printf("Search: %s\n",id);
     SymbolTable* cur_symbol_table = symbol_table;
     while (cur_symbol_table != NULL) {
         Symbol* cur_symbol = cur_symbol_table->symbol_head;
         while (cur_symbol != NULL) {
-            printf("Performing comparison in symbol table: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
+            // printf("Performing comparison in symbol table: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
             if (strcmp(cur_symbol->name, id) == 0) {
-                printf("Match found: %s\n",cur_symbol->name);
+                // printf("Match found: %s\n",cur_symbol->name);
                 return cur_symbol;
             }
             cur_symbol = cur_symbol->next;
         }
         cur_symbol_table = cur_symbol_table->prev;
     }
+    return NULL;
+}
+
+Symbol* global_search_symbol(char* id) {
+    printf("Search: %s\n",id);
+    SymbolTable* cur_symbol_table = global_symbol_table;
+    Symbol* cur_symbol = cur_symbol_table->symbol_head;
+    while (cur_symbol != NULL) {
+        printf("Performing comparison in symbol table: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
+        if (strcmp(cur_symbol->name, id) == 0) {
+            printf("Match found: %s\n",cur_symbol->name);
+            return cur_symbol;
+        }
+        cur_symbol = cur_symbol->next;
+    }
+    cur_symbol_table = cur_symbol_table->prev;
     return NULL;
 }
 

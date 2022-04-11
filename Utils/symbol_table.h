@@ -23,8 +23,6 @@ typedef struct Symbol {
     struct Symbol* next;
 } Symbol;
 
-extern Symbol* stack;
-
 // Stores symbols for a particular scope
 typedef struct SymbolTable {
     Symbol* symbol_head;
@@ -43,6 +41,8 @@ void push_symbol(Symbol* symbol);
 void push_global_symbol(Symbol* symbol);
 
 Symbol* search_symbol(char* id);
+
+Symbol* global_search_symbol(char* id);
 
 void push_symbol_table();
 

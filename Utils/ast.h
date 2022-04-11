@@ -54,6 +54,8 @@
 #define ast_param_stmt 44
 #define ast_return_stmt 45
 #define ast_if_stmt 46
+#define ast_func_call_stmt 47
+#define ast_arg_list_stmt 48
 
 typedef struct AST{
         int type;

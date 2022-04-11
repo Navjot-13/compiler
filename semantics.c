@@ -17,6 +17,8 @@ void traverse(AST *astroot);
 void typecheck(AST *astroot);
 void binary_op_type_checking(AST *astroot);
 void add_params(AST* astroot);
+void check_params(AST* astroot);
+bool compatible_types(int type1,int type2);
 
 int main(int argc, char *argv[])
 {
@@ -101,7 +103,15 @@ void traverse(AST *astroot)
         case ast_param_stmt:
         {
             push_symbol(astroot->symbol);
-
+            break;
+        }
+        case ast_arg_list_stmt:
+        {
+            break;
+        }
+        case ast_func_call_stmt:
+        {
+            check_params(astroot);
             break;
         }
         case ast_stmt_list:
@@ -191,36 +201,6 @@ void traverse(AST *astroot)
             astroot->datatype = symbol->type;
             break;
         }
-        // case ast_aeq_stmt:
-        // {
-        //     binary_op_type_checking(astroot);
-        //     break;
-        // }
-        // case ast_seq_stmt:
-        // {
-        //     binary_op_type_checking(astroot);
-        //     break;
-        // }
-        // case ast_meq_stmt:
-        // {
-        //     binary_op_type_checking(astroot);
-        //     break;
-        // }
-        // case ast_deq_stmt:
-        // {
-        //     binary_op_type_checking(astroot);
-        //     break;
-        // }
-        // case ast_incr_stmt:
-        // {
-        //     typecheck(astroot);
-        //     break;
-        // }
-        // case ast_decr_stmt:
-        // {
-        //     typecheck(astroot);
-        //     break;
-        // }
         case ast_or_stmt:
         {
             break;
@@ -346,16 +326,62 @@ void binary_op_type_checking(AST *astroot){
 void add_params(AST* astroot){
     AST* params = astroot->child[1];
     Symbol* func = astroot->symbol;
+    if(global_search_symbol(func->name) != NULL){
+        printf("Function with name %s already exists\n",func->name);
+        exit(0);
+    }
     Symbol* cur_param = func->param_list;
     while(params != NULL){
+        char* name = params->child[1]->symbol->name;
+        int type = params->child[1]->symbol->type;
         if(cur_param == NULL){
-            cur_param = params->child[1]->symbol;
+            func->param_list = symbol_init(name,type,NULL,NULL);
+            cur_param = func->param_list;
         } else{
-            cur_param->next = params->child[1]->symbol;
+            cur_param->next = symbol_init(name,type,NULL,NULL);
             cur_param->next->prev = cur_param;
             cur_param = cur_param->next;
         }
         params = params->child[0];
     }
     push_global_symbol(func);// push the function symbol to the global scope
+}
+
+// check if implicit type conversion can take place between 2 given types
+bool convertible_types(int type1,int type2){
+    if(type1 == type2){
+        return true;
+    }
+    if(type1 == STR_TYPE || type2 == STR_TYPE){
+        return false;
+    }
+    return true;
+}
+
+void check_params(AST* astroot){
+    AST* args = astroot->child[0];
+    Symbol* func = global_search_symbol(astroot->symbol->name);
+    if(func == NULL){
+        printf("No function with name %s exists.\n",astroot->symbol->name);
+        exit(0);
+    }
+    Symbol* params = func->param_list;
+    while(params != NULL && args != NULL){
+        if(!convertible_types(params->type,args->child[1]->datatype)){
+            printf("Type mismatch in function %s for parameter %s\n",astroot->symbol->name,params->name);
+            exit(0);
+        }
+        params = params->next;
+        args = args->child[0];
+    }
+    if(params != NULL){
+        printf("Type: %s\n",params->name);
+        printf("Too few arguments for the function %s\n",astroot->symbol->name);
+        exit(0);
+    } else if(args != NULL){
+        printf("Too many arguments for the function %s\n",astroot->symbol->name);
+        exit(0);
+    }
+    printf("Return type : %d\n",func->type);
+    astroot->datatype = func->type;
 }

@@ -261,10 +261,12 @@ void traverse(AST *astroot)
         }
         case ast_unary_add:
         {
+            astroot->datatype = astroot->child[0]->datatype;
             break;
         }
         case ast_unary_sub:
         {
+            astroot->datatype = astroot->child[0]->datatype;
             break;
         }
         case ast_const_val:
@@ -274,7 +276,7 @@ void traverse(AST *astroot)
         }
         case ast_print_stmt:
         {
-
+            break;
         }
         case ast_input_stmt:
         {
@@ -283,6 +285,7 @@ void traverse(AST *astroot)
                 printf("Identifier undeclared\n");
                 exit(0);
             }
+            break;
         }
         default:
         {
@@ -299,6 +302,7 @@ void typecheck(AST *astroot) {
         astroot->child[0]->val.double_val= (double)astroot->child[1]->val.int_val;
         astroot->datatype = DOUBLE_TYPE;
     } else if(astroot->child[0]->datatype != astroot->child[1]->datatype) {
+        printf("Types: %d    %d\n",astroot->child[0]->datatype,astroot->child[1]->datatype);
         printf("\nError: Type mismatch in assignment statement\n");
         exit(0);
     }

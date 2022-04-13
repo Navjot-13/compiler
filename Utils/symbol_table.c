@@ -4,90 +4,117 @@
 #include "symbol_table.h"
 
 
-Symbol* pop() {
-    if (stack == NULL) {
-        printf("Stack is empty!!");
-        return NULL;
-    }
-    Symbol* cur_symbol = stack;
-    while (cur_symbol->next != NULL) {
-        cur_symbol = cur_symbol->next;
-    }
-    if (cur_symbol->prev) {
-        cur_symbol->prev->next = NULL;
-    } else {
-        stack = NULL;
-    }
-    return cur_symbol;
-}
-
-void push(Symbol* symbol) {
-    char *name = (char*)malloc((strlen(symbol->name)+1)*sizeof(char));
-    strcpy(name, symbol->name);
-    if (stack == NULL) {
-        stack = symbol_init(name, symbol->type, NULL, NULL);
-    } else {
-        // I changed function check once
-        Symbol* cur_symbol = stack;
-        while (cur_symbol->next != NULL) {
-            cur_symbol = cur_symbol->next;
-        }
-        cur_symbol->next = symbol_init(name, symbol->type, cur_symbol, NULL);
-    }
-}
-
 void pop_symbol_table() {
-    SymbolTable* latest_symbol_table = symbol_table->prev;
-    free(symbol_table);
-    symbol_table = latest_symbol_table;
-    symbol_table->next = NULL;
+    SymbolTable* latest_symbol_table = current_symbol_table->prev;
+    free(current_symbol_table);
+    current_symbol_table = latest_symbol_table;
+    if(current_symbol_table != NULL){
+        current_symbol_table->next = NULL;
+    }
 }
 
 void push_symbol_table() {
-    if(symbol_table == NULL){
-        symbol_table = (SymbolTable*)malloc(sizeof(SymbolTable));
-        symbol_table->prev = NULL;
-        symbol_table->next = NULL;
-        symbol_table->symbol_head = NULL;
+    if(current_symbol_table == NULL){
+        current_symbol_table = (SymbolTable*)malloc(sizeof(SymbolTable));
+        current_symbol_table->prev = NULL;
+        current_symbol_table->next = NULL;
+        current_symbol_table->symbol_head = NULL;
     } else {
-        symbol_table->next = (SymbolTable*) malloc(sizeof(SymbolTable));
-        symbol_table->next->prev = symbol_table;
-        symbol_table = symbol_table->next;
-        symbol_table->next = NULL;
-        symbol_table->symbol_head = NULL;
+        current_symbol_table->next = (SymbolTable*) malloc(sizeof(SymbolTable));
+        current_symbol_table->next->prev = current_symbol_table;
+        current_symbol_table = current_symbol_table->next;
+        current_symbol_table->next = NULL;
+        current_symbol_table->symbol_head = NULL;
     }
+    current_symbol_table->scope = current_scope;
+}
+
+void push_persistent_symbol_table(){
+    if(persistent_symbol_table == NULL){
+        persistent_symbol_table = (SymbolTable*)malloc(sizeof(SymbolTable));
+        persistent_symbol_table->prev = NULL;
+        persistent_symbol_table->next = NULL;
+        persistent_symbol_table->symbol_head = NULL;
+    } else {
+        persistent_symbol_table->next = (SymbolTable*) malloc(sizeof(SymbolTable));
+        persistent_symbol_table->next->prev = persistent_symbol_table;
+        persistent_symbol_table = persistent_symbol_table->next;
+        persistent_symbol_table->next = NULL;
+        persistent_symbol_table->symbol_head = NULL;
+    }
+    persistent_symbol_table->scope = current_scope;
 }
 
 Symbol* search_symbol(char* id) {
-    printf("Search: %s\n",id);
-    SymbolTable* cur_symbol_table = symbol_table;
+    // printf("REACHED for %s\n",id);
+    SymbolTable* cur_symbol_table = current_symbol_table;
     while (cur_symbol_table != NULL) {
         Symbol* cur_symbol = cur_symbol_table->symbol_head;
         while (cur_symbol != NULL) {
-            printf("Performing comparison in symbol table: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
+            // printf("Performing comparison in symbol table: %s,%s,%d\n",cur_symbol->name,id,strcmp(cur_symbol->name,id));
             if (strcmp(cur_symbol->name, id) == 0) {
-                printf("Match found: %s\n",cur_symbol->name);
+                // printf("Match found: %s\n",cur_symbol->name);
                 return cur_symbol;
             }
             cur_symbol = cur_symbol->next;
         }
         cur_symbol_table = cur_symbol_table->prev;
     }
+    // printf("Search: %s\n",id);
     return NULL;
 }
 
 void push_symbol(Symbol* symbol) {
-    if (symbol_table->symbol_head == NULL) {
-        // symbol_table->symbol_head = symbol_init(symbol->name, symbol->type, NULL, NULL);
-        symbol_table->symbol_head = symbol;
+    char *name = (char*)malloc((strlen(symbol->name)+1)*sizeof(char));
+    strcpy(name, symbol->name);
+    Symbol* new_symbol = symbol_init(name,symbol->type,NULL,NULL);
+    new_symbol->is_array = symbol->is_array;
+    new_symbol->is_function = symbol->is_function;
+    new_symbol->param_list = symbol->param_list;
+    new_symbol->size = symbol->size;
+    if (current_symbol_table->symbol_head == NULL) {
+        current_symbol_table->symbol_head = new_symbol;
     } else {
-        // I changed function check once
-        Symbol* cur_symbol = symbol_table->symbol_head;
+        Symbol* cur_symbol = current_symbol_table->symbol_head;
         while (cur_symbol->next != NULL) {
             cur_symbol = cur_symbol->next;
         }
-        // cur_symbol->next = symbol_init(symbol->name, symbol->type, cur_symbol, NULL);
-        cur_symbol->next = symbol;
+        cur_symbol->next = new_symbol;
+        new_symbol->prev = cur_symbol;
+    }
+    push_persistent_symbol(symbol);
+}
+
+void adjust_persistent_symbol_table() {
+    SymbolTable* cur_symbol_table = persistent_symbol_table;
+    while(cur_symbol_table->next != NULL){
+        cur_symbol_table = cur_symbol_table->next;
+    }
+    while(cur_symbol_table->scope != current_scope){
+        cur_symbol_table = cur_symbol_table->prev;
+    }
+    persistent_symbol_table = cur_symbol_table;
+}
+
+void push_persistent_symbol(Symbol* symbol){
+    char *name = (char*)malloc((strlen(symbol->name)+1)*sizeof(char));
+    strcpy(name, symbol->name);
+    Symbol* new_symbol = symbol_init(name,symbol->type,NULL,NULL);
+    new_symbol->is_array = symbol->is_array;
+    new_symbol->is_function = symbol->is_function;
+    new_symbol->param_list = symbol->param_list;
+    new_symbol->size = symbol->size;
+    if (persistent_symbol_table->symbol_head == NULL) {
+        persistent_symbol_table->symbol_head = new_symbol;
+        persistent_symbol_table->size = symbol->size;
+    } else {
+        Symbol* cur_symbol = persistent_symbol_table->symbol_head;
+        while (cur_symbol->next != NULL) {
+            cur_symbol = cur_symbol->next;
+        }
+        persistent_symbol_table->size += symbol->size;
+        cur_symbol->next = new_symbol;
+        new_symbol->prev = cur_symbol;
     }
 }
 
@@ -98,5 +125,9 @@ Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     new_symbol->type = type;
     new_symbol->prev = prev;
     new_symbol->next = next;
+    new_symbol->is_function = -1;
+    new_symbol->is_array = -1;
+    new_symbol->param_list = NULL;
+    new_symbol->size = 0;
     return new_symbol;
 }

@@ -1,16 +1,26 @@
+decimal add(int a,int b){
+    if(b > 0){
+        ifloop(a > 0){
+            a++;
+        }
+    } else if (b == 0){
+        int v;
+        a = a + v;
+    }
+    else{
+        a += 2;
+    }
+    bool c;
+    c = true;
+    return a + b;
+}
+
+int sub(string s,int c){
+
+}
+
 begin {
-    int i;
-    decimal d;
-    string str;
-    d = 5.5 + 8;
-    i = 4;
-    int x;
-    if(i > 0) {
-        x = 5;
-    } else if ( i < 0) {
-        x = 5;
-    }
-    ifloop(x < 10){
-        x++;
-    }
+    int c;
+    int a,b;
+    c = add(a,c);
 }

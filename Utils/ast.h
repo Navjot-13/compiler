@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<stdbool.h>
 #include "symbol_table.h"
 
 #define ast_stmt_list 0
@@ -42,17 +43,31 @@
 #define ast_pop_scope 33
 #define ast_var_expr 34
 #define ast_const_val 35
-#define ast_print_stmt 36
-#define ast_input_stmt 37
+#define ast_array_stmt 36
+#define ast_array_datatype_stmt 37
+#define ast_print_stmt 38
+#define ast_input_stmt 39
+#define ast_start_stmt 40
+#define ast_func_stmt 41
+#define ast_func_list_stmt 42
+#define ast_param_list_stmt 43
+#define ast_param_stmt 44
+#define ast_return_stmt 45
+#define ast_if_stmt 46
+#define ast_func_call_stmt 47
+#define ast_arg_list_stmt 48
 
 typedef struct AST{
         int type;
         int datatype;
         Symbol *symbol;
+        int size;
+        int scope_no;// scope number of the current AST node
         union {
                 int int_val;
                 double double_val;
                 char str_val[300];
+                bool bool_val;
         } val;
         struct AST *child[4];
 

@@ -1,4 +1,14 @@
 begin{
-    int x;
-    x=5;
+    int b;
+    int a;
+    if(b > 0){
+        ifloop(a > 0){
+            a++;
+        }
+    }
+    else if(a == 0){
+        a += 2;
+    }
+    array<array<int,3>,2> a;
+    bool c;
 }

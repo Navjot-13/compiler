@@ -7,9 +7,11 @@
 #include "Utils/symbol_table.h"
 #include "Utils/ast.h"
 
-SymbolTable* symbol_table;
-SymbolTable* global_symbol_table;
+SymbolTable* current_symbol_table;
+SymbolTable* persistent_symbol_table;
 AST* astroot;
+int unused_scope;
+int current_scope;
 
 int yylex();
 int yyerror(char *);
@@ -38,7 +40,9 @@ input_stmt printable
 program:        func_list  BGN statements 
                 {
                         printf("No problem\n");
-                        astroot = make_node(ast_start_stmt,$1,$3,NULL,NULL);
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        astroot = make_node(ast_start_stmt,push,$1,$3,pop);
                 }
                 ; 
 
@@ -56,11 +60,11 @@ func_list:      func_list function
                 
                 ;
 
-function:       data_type ID '(' params ')' statements
+function:       data_type ID '(' params ')' '{' stmt_list '}'
                 {
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        $$ = make_node(ast_func_stmt,push,$4,$6,pop);
+                        $$ = make_node(ast_func_stmt,push,$4,$7,pop);
                         char *name = (char*)malloc((strlen($2)+1)*sizeof(char));
                         strcpy(name, $2);
                         $$->symbol = symbol_init(name,$1,NULL,NULL);
@@ -586,7 +590,7 @@ loop_stmt:      LP '(' expr ')' statements
                 {
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        $$ = make_node(ast_loop_stmt,$3,push,$5,pop);
+                        $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
                 }
                 ;
 

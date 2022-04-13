@@ -42,7 +42,7 @@ program:        func_list  BGN statements
                         printf("No problem\n");
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        astroot = make_node(ast_start_stmt,push,$1,$3,pop);
+                        astroot = make_node(ast_start_stmt,$1,$3,NULL,NULL);
                 }
                 ; 
 

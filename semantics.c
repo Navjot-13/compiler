@@ -14,6 +14,10 @@ extern int current_scope;
 extern int unused_scope;
 FILE *fp;
 
+int registers[32];
+int lru_counter[32];
+int global_counter = 1;
+
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
@@ -23,6 +27,8 @@ void check_params(AST* astroot);
 bool compatible_types(int type1,int type2);
 void generate_code(AST* astroot);
 int get_size(int type);
+void update_counter();
+int get_register();
 
 int main(int argc, char *argv[])
 {
@@ -652,4 +658,20 @@ int get_size(int type){
         return 1;
     }
     return 0;
+}
+
+void update_counter() {
+    global_counter++;
+}
+
+int get_register () {
+    int min_index = 0;
+    for (int i = 0; i < 32; i++) {
+        if (lru_counter[i] < lru_counter[min_index])
+            min_index = i;
+    }
+    lru_counter[min_index] = global_counter;
+    update_counter();
+
+    return min_index;
 }

@@ -35,20 +35,21 @@ int main(int argc, char *argv[])
     yyparse();
     current_symbol_table = NULL;
     persistent_symbol_table = NULL;
-    // current_symbol_table = (SymbolTable *)malloc(sizeof(SymbolTable));
-    // current_symbol_table->prev = NULL;
-    // current_symbol_table->next = NULL;
-    // current_symbol_table->symbol_head = NULL;
-    // current_symbol_table->scope = current_scope;
     current_scope = -1;
     unused_scope = 0;
+    current_scope = unused_scope;
+    ++unused_scope;
+    push_symbol_table();
+    push_persistent_symbol_table();
     traverse(astroot);
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
     fprintf(fp,"begin:\n");
-    // generate_code(astroot);
+    generate_code(astroot);
+    fprintf(fp,"    jr $ra\n");
+    fclose(fp);
 }
 
 void generate_code(AST* astroot){
@@ -57,7 +58,7 @@ void generate_code(AST* astroot){
         return;
 
     for (int i = 0; i < 4; i++)
-        traverse(astroot->child[i]);
+        generate_code(astroot->child[i]);
 
     switch (astroot->type)
     {
@@ -71,6 +72,13 @@ void generate_code(AST* astroot){
         }
         case ast_push_scope:
         {
+            current_scope = astroot->scope_no;
+            adjust_persistent_symbol_table();
+            fprintf(fp,"    la $sp, -8($sp)\n");// allocate space for old $fp and $ra
+            fprintf(fp,"    sw $fp, 4($sp)\n");// save old $fp
+            fprintf(fp,"    sw $ra,0($sp)\n");// save return address
+            fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
+            fprintf(fp,"    la $sp, -%d($sp)\n",persistent_symbol_table->size);// allocate stack frame
             break;
         }
         case ast_pop_scope:
@@ -260,12 +268,14 @@ void traverse(AST *astroot)
     {
         case ast_stmts:
         {
+            astroot->scope_no = current_scope;
             break;
         }
         case ast_push_scope:
         {
             current_scope = unused_scope;
             ++unused_scope;
+            astroot->scope_no = current_scope;
             push_symbol_table();
             push_persistent_symbol_table();
             break;
@@ -276,8 +286,9 @@ void traverse(AST *astroot)
             pop_symbol_table();
             if(current_symbol_table != NULL){
                 current_scope = current_symbol_table->scope;
+                adjust_persistent_symbol_table();
             }
-            adjust_persistent_symbol_table();
+            astroot->scope_no = current_scope;
             break;
         }
         case ast_start_stmt:

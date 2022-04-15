@@ -14,8 +14,8 @@ extern int current_scope;
 extern int unused_scope;
 FILE *fp;
 
-int registers[32];
-int lru_counter[32];
+int registers[18];      // Registers from $8 to $25
+int lru_counter[18];
 int global_counter = 1;
 
 void assign_type (AST *astroot);
@@ -45,8 +45,6 @@ int main(int argc, char *argv[])
     unused_scope = 0;
     current_scope = unused_scope;
     ++unused_scope;
-    push_symbol_table();
-    push_persistent_symbol_table();
     traverse(astroot);
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
@@ -198,6 +196,7 @@ void generate_code(AST* astroot){
         }
         case ast_add_stmt:
         {
+
             break;
         }
         case ast_sub_stmt:
@@ -666,12 +665,12 @@ void update_counter() {
 
 int get_register () {
     int min_index = 0;
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 18; i++) {
         if (lru_counter[i] < lru_counter[min_index])
             min_index = i;
     }
     lru_counter[min_index] = global_counter;
     update_counter();
 
-    return min_index;
+    return min_index; // Offset as reg starts from 8
 }

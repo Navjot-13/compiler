@@ -87,6 +87,8 @@ void generate_code(AST* astroot){
         }
         case ast_pop_scope:
         {
+            current_scope = astroot->scope_no;
+            adjust_persistent_symbol_table();
             break;
         }
         case ast_start_stmt:

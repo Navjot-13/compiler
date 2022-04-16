@@ -416,10 +416,8 @@ void traverse(AST *astroot)
                 exit(0);
             }
             astroot->symbol->size = get_size(astroot->symbol->type);
-            printf("Size of %s: %d\n",astroot->symbol->name,astroot->symbol->size);
             astroot->symbol->offset = global_offset;
             global_offset += astroot->symbol->size;
-            printf("Offset of %s: %d\n",astroot->symbol->name,astroot->symbol->offset);
             push_symbol(astroot->symbol);
             break;
         }
@@ -440,7 +438,6 @@ void traverse(AST *astroot)
             }
             astroot->symbol = symbol;
             astroot->datatype = symbol->type;
-            printf("%s\n",astroot->symbol->name);
             break;
         }
         case ast_or_stmt:

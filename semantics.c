@@ -46,13 +46,13 @@ int main(int argc, char *argv[])
     unused_scope = 0;
     current_scope = unused_scope;
     ++unused_scope;
-    traverse(astroot);
+    
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
     fprintf(fp,"begin:\n");
-    generate_code(astroot);
+    traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);
 }
@@ -348,11 +348,11 @@ void traverse(AST *astroot)
             astroot->scope_no = current_scope;
             astroot->val = astroot->child[1]->val;
             astroot->datatype = astroot->child[0]->datatype;
-            typecheck(astroot);
-
-            // Generate code
             
-
+            typecheck(astroot);
+            // Generate Code (Considering only integers for now)
+            printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
+            fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
             break;
         }
         case ast_cond_stmt:
@@ -416,8 +416,10 @@ void traverse(AST *astroot)
                 exit(0);
             }
             astroot->symbol->size = get_size(astroot->symbol->type);
-            symbol->offset = global_offset;
+            printf("Size of %s: %d\n",astroot->symbol->name,astroot->symbol->size);
+            astroot->symbol->offset = global_offset;
             global_offset += astroot->symbol->size;
+            printf("Offset of %s: %d\n",astroot->symbol->name,astroot->symbol->offset);
             push_symbol(astroot->symbol);
             break;
         }
@@ -428,6 +430,7 @@ void traverse(AST *astroot)
         }
         case ast_var_expr:
         {
+            
             astroot->scope_no = current_scope;
             Symbol *symbol = search_symbol(astroot->symbol->name);
             if (symbol == NULL)
@@ -437,6 +440,7 @@ void traverse(AST *astroot)
             }
             astroot->symbol = symbol;
             astroot->datatype = symbol->type;
+            printf("%s\n",astroot->symbol->name);
             break;
         }
         case ast_or_stmt:
@@ -483,6 +487,14 @@ void traverse(AST *astroot)
         {
             astroot->scope_no = current_scope;
             binary_op_type_checking(astroot);
+            
+            // Generate Code (Considering only integers for now)
+            int reg1 = get_register();
+            int reg2 = get_register();
+            astroot->reg = reg1;
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
+            fprintf(fp, "    add $%d, $%d, $%d\n", reg1, reg1, reg2);
             break;
         }
         case ast_sub_stmt:
@@ -523,6 +535,10 @@ void traverse(AST *astroot)
         case ast_const_val:
         {
             astroot->scope_no = current_scope;
+            // Generate Code (Considering only integers for now)
+            int reg1 = get_register();
+            astroot->reg = reg1;
+            fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.int_val);
             break;
         }
         case ast_print_stmt:
@@ -681,5 +697,5 @@ int get_register () {
     lru_counter[min_index] = global_counter;
     update_counter();
 
-    return min_index; // Offset as reg starts from 8
+    return min_index+8; // Offset as reg starts from 8
 }

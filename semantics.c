@@ -18,7 +18,7 @@ int registers[18];      // Registers from $8 to $25
 int lru_counter[18];
 int global_counter = 1;
 int global_offset = 0;
-
+int label = 0;
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
     fprintf(fp,"    .globl main\n");
     fprintf(fp,"main:\n");
     fprintf(fp,"    la $fp, 0($sp)\n");
+    astroot->next = label++;
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);
@@ -254,6 +255,20 @@ void traverse(AST *astroot)
 
     switch (astroot->type)
     {
+        case ast_stmts:
+        {
+            if(astroot->child[1]){
+                astroot->child[1]->next = astroot->next;
+            }
+        }
+        case ast_stmt_list:
+        {
+            astroot->child[0]->next = label++;
+            if(astroot->child[1]){
+                astroot->child[1]->next = astroot->next;
+            }
+        }
+
         case ast_var_list:
         {
             astroot->scope_no = current_scope;
@@ -266,6 +281,27 @@ void traverse(AST *astroot)
                 }
             }
             break;
+        }
+
+        case ast_cond_stmt:
+        {
+            astroot->child[0]->child[0]->tru = label++;
+            if(astroot->child[1]){
+                astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
+            } else{
+                astroot->child[0]->child[0]->fal = label++;
+                astroot->child[0]->child[2]->next = astroot->next;
+                if(astroot->child[1]){
+                    astroot->child[1]->next = astroot->next;
+                }
+            }
+        }
+
+        case ast_loop_stmt:
+        {
+            astroot->child[0]->tru = label++;
+            astroot->child[1]->fal = astroot->next;
+            astroot->child[1]->next = label++;
         }
     }
 

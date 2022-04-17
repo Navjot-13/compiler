@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
     fprintf(fp,"main:\n");
+    fprintf(fp,"    la $fp, 0($sp)\n");
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);

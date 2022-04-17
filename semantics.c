@@ -260,6 +260,7 @@ void traverse(AST *astroot)
             if(astroot->child[1]){
                 astroot->child[1]->next = astroot->next;
             }
+            break;
         }
         case ast_stmt_list:
         {
@@ -267,6 +268,7 @@ void traverse(AST *astroot)
             if(astroot->child[1]){
                 astroot->child[1]->next = astroot->next;
             }
+            break;
         }
 
         case ast_var_list:
@@ -295,6 +297,7 @@ void traverse(AST *astroot)
                     astroot->child[1]->next = astroot->next;
                 }
             }
+            break;
         }
 
         case ast_loop_stmt:
@@ -302,6 +305,32 @@ void traverse(AST *astroot)
             astroot->child[0]->tru = label++;
             astroot->child[1]->fal = astroot->next;
             astroot->child[1]->next = label++;
+            break;
+        }
+
+        case ast_or_stmt:
+        {
+            astroot->child[0]->tru = astroot->tru;
+            astroot->child[0]->fal = label++;
+            astroot->child[1]->tru = astroot->tru;
+            astroot->child[1]->fal = astroot->fal;
+            break;
+        }
+
+        case ast_and_stmt:
+        {
+            astroot->child[0]->tru = label++;
+            astroot->child[0]->fal = astroot->fal;
+            astroot->child[1]->tru = astroot->tru;
+            astroot->child[1]->fal = astroot->fal;
+            break;
+        }
+
+        case ast_unary_not:
+        {
+            astroot->child[0]->tru = astroot->fal;
+            astroot->child[0]->fal = astroot->tru;
+            break;
         }
     }
 

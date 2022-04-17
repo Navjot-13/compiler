@@ -59,194 +59,436 @@ int main(int argc, char *argv[])
     fclose(fp);
 }
 
-void generate_code(AST* astroot){
-    
-    if (astroot == NULL)
-        return;
-
-    for (int i = 0; i < 4; i++)
-        generate_code(astroot->child[i]);
-
-    switch (astroot->type)
-    {
-        case ast_var_list:
-        {
-            break;
-        }
-        case ast_stmts:
-        {
-            break;
-        }
-        case ast_push_scope:
-        {
-            current_scope = astroot->scope_no;
-            adjust_persistent_symbol_table();
-            fprintf(fp,"    la $sp, -8($sp)\n");// allocate space for old $fp and $ra
-            fprintf(fp,"    sw $fp, 4($sp)\n");// save old $fp
-            fprintf(fp,"    sw $ra,0($sp)\n");// save return address
-            fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
-            fprintf(fp,"    la $sp, -%d($sp)\n",persistent_symbol_table->size);// allocate stack frame
-            break;
-        }
-        case ast_pop_scope:
-        {
-            current_scope = astroot->scope_no;
-            adjust_persistent_symbol_table();
-            break;
-        }
-        case ast_start_stmt:
-        {
-            break;
-        }
-        case ast_func_stmt:
-        {
-            break;
-        }
-        case ast_func_list_stmt:
-        {
-            break;
-        }
-        case ast_param_list_stmt:
-        {
-            break;
-        }
-        case ast_param_stmt:
-        {
-            break;
-        }
-        case ast_arg_list_stmt:
-        {
-            break;
-        }
-        case ast_func_call_stmt:
-        {
-            break;
-        }
-        case ast_stmt_list:
-        {
-            break;
-        }
-        case ast_assgn_stmt:
-        {
-            break;
-        }
-        case ast_cond_stmt:
-        {
-            break;
-        }
-        case ast_loop_stmt:
-        {
-            break;
-        }
-        case ast_decl_stmt:
-        {
-            break;
-        }
-        case ast_array_decl_stmt:
-        {
-            break;
-        }
-        case ast_expressions_stmt:
-        {
-
-            break;
-        }
-        case ast_arry_assgn_stmt:
-        {
-            break;
-        }
-        case ast_array_stmt:
-        {
-            break;
-        }
-        case ast_variable_stmt:
-        {
-            break;
-        }
-        case ast_var_expr:
-        {
-            break;
-        }
-        case ast_or_stmt:
-        {
-            break;
-        }
-        case ast_and_stmt:
-        {
-            break;
-        }
-        case ast_eq_stmt:
-        {
-            break;
-        }
-        case ast_neq_stmt:
-        {
-            break;
-        }
-        case ast_lt_stmt:
-        {
-            break;
-        }
-        case ast_gt_stmt:
-        {
-            break;
-        }
-        case ast_geq_stmt:
-        {
-            break;
-        }
-        case ast_leq_stmt:
-        {
-            break;
-        }
-        case ast_add_stmt:
-        {
-
-            break;
-        }
-        case ast_sub_stmt:
-        {
-            break;
-        }
-        case ast_mul_stmt:
-        {
-            break;
-        }
-        case ast_div_stmt:
-        {
-            break;
-        }
-        case ast_unary_not:
-        {
-            break;
-        }
-        case ast_unary_add:
-        {
-            break;
-        }
-        case ast_unary_sub:
-        {
-            break;
-        }
-        case ast_const_val:
-        {
-            
-            break;
-        }
-        case ast_print_stmt:
-        {
-            break;
-        }
-        case ast_input_stmt:
-        {
-            break;
-        }
-        default:
-        {
-            break;
-        }
+void traverse_ast_stmts(AST* astroot)
+{
+    if(astroot->child[1]){
+        astroot->child[1]->next = astroot->next;
+    }
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
     }
 }
+
+void traverse_ast_push_scope(AST* astroot)
+{
+    push_symbol_table();
+}
+
+void traverse_ast_pop_scope(AST* astroot)
+{
+    pop_symbol_table();
+}
+
+void traverse_ast_start_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_func_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    add_params(astroot);
+}
+
+void traverse_func_list_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_param_list_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_param_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    astroot->symbol->size = get_size(astroot->symbol->type);
+    push_symbol(astroot->symbol);
+}
+
+void traverse_ast_arg_list_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_func_call_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    check_params(astroot);
+}
+
+void traverse_ast_stmt_list(AST* astroot)
+{
+    astroot->child[0]->next = label++;
+    if(astroot->child[1]){
+        astroot->child[1]->next = astroot->next;
+    }
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_assgn_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->val = astroot->child[1]->val;
+    astroot->datatype = astroot->child[0]->datatype;        
+    typecheck(astroot);
+    // Generate Code (Considering only integers for now)
+    printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
+    fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
+}
+        
+void traverse_ast_cond_stmt(AST* astroot)
+{
+
+    if(astroot->child[0]->child[0]){
+        astroot->child[0]->child[0]->tru = label++;
+        if(astroot->child[1]){
+            astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
+        } 
+        else{
+            astroot->child[0]->child[0]->fal = label++;
+            astroot->child[0]->child[2]->next = astroot->next;
+            if(astroot->child[1]){
+                astroot->child[1]->next = astroot->next;
+            }
+        }
+    }
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_loop_stmt(AST* astroot)
+{
+    astroot->child[0]->tru = label++;
+    astroot->child[1]->fal = astroot->next;
+    astroot->child[1]->next = label++;
+    for(int i = 0; i < 4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_decl_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_array_decl_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
+    push_symbol(astroot->symbol);
+    printf("Array size: %d\n",astroot->symbol->size);
+}
+
+void traverse_ast_expressions_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_arry_assgn_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    Symbol *symbol = search_symbol(astroot->symbol->name);
+    if(symbol == NULL){
+        printf("Identifier undeclared\n");
+    }
+    if(symbol->is_array != 1){
+        printf("Identifier not an array type.\n");
+        exit(0);
+    }
+    if(astroot->child[1]->datatype != INT_TYPE){
+        printf("array subscript not an integer\n");
+        exit(0);
+    }
+    astroot->datatype = symbol->type;
+}
+
+void traverse_ast_array_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_variable_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->symbol->type = astroot->datatype;
+    Symbol* symbol = search_symbol(astroot->symbol->name);
+    if(symbol != NULL){
+        printf("Identified %s already declared in current scope\n",symbol->name);
+        exit(0);
+    }
+    astroot->symbol->size = get_size(astroot->symbol->type);
+    astroot->symbol->offset = global_offset;
+    global_offset += astroot->symbol->size;
+    push_symbol(astroot->symbol);
+    // Generate Code
+    fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->symbol->type));// allocate stack frame
+}
+
+void traverse_ast_var_list(AST* astroot)
+{
+    astroot->scope_no = current_scope;
+    for (int i = 0; i < 4; i++) {
+            if (astroot->child[i] != NULL) {
+            astroot->child[i]->datatype = astroot->datatype;
+            if (astroot->child[i]->type == ast_variable_stmt) {
+                astroot->child[i]->symbol->type = astroot->datatype;
+            }
+        }
+    }
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_var_expr(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    Symbol *symbol = search_symbol(astroot->symbol->name);
+    if (symbol == NULL)
+    {
+        printf("\nError: Variable %s not declared\n", astroot->symbol->name);
+        exit(0);
+    }
+    astroot->symbol = symbol;
+    astroot->datatype = symbol->type;
+
+    // Generate code
+    int reg = get_register();
+    astroot->reg = reg;
+    fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
+}
+
+void traverse_ast_or_stmt(AST* astroot)
+{
+    astroot->child[0]->tru = astroot->tru;
+    astroot->child[0]->fal = label++;
+    astroot->child[1]->tru = astroot->tru;
+    astroot->child[1]->fal = astroot->fal;
+    for(int i = 0; i < 4;++i){
+        traverse(astroot);
+    }
+}
+
+void traverse_ast_and_stmt(AST* astroot)
+{
+    astroot->child[0]->tru = label++;
+    astroot->child[0]->fal = astroot->fal;
+    astroot->child[1]->tru = astroot->tru;
+    astroot->child[1]->fal = astroot->fal;
+    for(int i = 0; i < 4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+    
+void traverse_ast_eq_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_neq_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_lt_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+        
+void traverse_ast_gt_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_geq_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_leq_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_add_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    binary_op_type_checking(astroot);
+    
+    // Generate Code (Considering only integers for now)
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    astroot->reg = reg0;
+    fprintf(fp, "    add $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+}
+
+void traverse_ast_sub_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    binary_op_type_checking(astroot);
+
+    // Generate Code (Considering only integers for now)
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    astroot->reg = reg0;
+    fprintf(fp, "    sub $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+}
+
+void traverse_ast_mul_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    binary_op_type_checking(astroot);
+
+    // Generate Code (Considering only integers for now)
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    astroot->reg = reg0;
+    fprintf(fp, "    mul $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+}
+
+void traverse_ast_div_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    binary_op_type_checking(astroot);
+
+    // Generate Code (Considering only integers for now)
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    astroot->reg = reg0;
+    fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+}
+
+void traverse_ast_unary_not(AST* astroot)
+{
+    astroot->child[0]->tru = astroot->fal;
+    astroot->child[0]->fal = astroot->tru;
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_unary_add(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->datatype = astroot->child[0]->datatype;
+}
+
+void traverse_ast_unary_sub(AST* root)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->datatype = astroot->child[0]->datatype;
+}
+
+void traverse_ast_const_val(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    // Generate Code (Considering only integers for now)
+    int reg1 = get_register();
+    astroot->reg = reg1;
+    fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.int_val);
+    
+}
+
+void traverse_ast_print_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_input_stmt(AST* astroot)
+{
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
+    astroot->scope_no = current_scope;
+    Symbol *symbol = search_symbol(astroot->symbol->name);
+    if(symbol == NULL){
+        printf("Identifier undeclared\n");
+        exit(0);
+    }
+}
+
+void traverse_ast_if_stmt(AST* astroot){
+    for(int i = 0; i < 4;++i){
+        traverse(astroot->child[i]);
+    }
+}
+
+void traverse_ast_return_stmt(AST* astroot)
+{
+    // pass
+}
+
+
 
 void traverse(AST *astroot)
 {
@@ -257,402 +499,215 @@ void traverse(AST *astroot)
     {
         case ast_stmts:
         {
-            if(astroot->child[1]){
-                astroot->child[1]->next = astroot->next;
-            }
-            break;
-        }
-        case ast_stmt_list:
-        {
-            astroot->child[0]->next = label++;
-            if(astroot->child[1]){
-                astroot->child[1]->next = astroot->next;
-            }
-            break;
-        }
-
-        case ast_var_list:
-        {
-            astroot->scope_no = current_scope;
-            for (int i = 0; i < 4; i++) {
-                if (astroot->child[i] != NULL) {
-                    astroot->child[i]->datatype = astroot->datatype;
-                    if (astroot->child[i]->type == ast_variable_stmt) {
-                        astroot->child[i]->symbol->type = astroot->datatype;
-                    }
-                }
-            }
-            break;
-        }
-
-        case ast_cond_stmt:
-        {
-            astroot->child[0]->child[0]->tru = label++;
-            if(astroot->child[1]){
-                astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
-            } else{
-                astroot->child[0]->child[0]->fal = label++;
-                astroot->child[0]->child[2]->next = astroot->next;
-                if(astroot->child[1]){
-                    astroot->child[1]->next = astroot->next;
-                }
-            }
-            break;
-        }
-
-        case ast_loop_stmt:
-        {
-            astroot->child[0]->tru = label++;
-            astroot->child[1]->fal = astroot->next;
-            astroot->child[1]->next = label++;
-            break;
-        }
-
-        case ast_or_stmt:
-        {
-            astroot->child[0]->tru = astroot->tru;
-            astroot->child[0]->fal = label++;
-            astroot->child[1]->tru = astroot->tru;
-            astroot->child[1]->fal = astroot->fal;
-            break;
-        }
-
-        case ast_and_stmt:
-        {
-            astroot->child[0]->tru = label++;
-            astroot->child[0]->fal = astroot->fal;
-            astroot->child[1]->tru = astroot->tru;
-            astroot->child[1]->fal = astroot->fal;
-            break;
-        }
-
-        case ast_unary_not:
-        {
-            astroot->child[0]->tru = astroot->fal;
-            astroot->child[0]->fal = astroot->tru;
-            break;
-        }
-    }
-
-    for (int i = 0; i < 4; i++){
-        traverse(astroot->child[i]);
-    }
-
-    switch (astroot->type)
-    {
-        case ast_stmts:
-        {
-            astroot->scope_no = current_scope;
+            traverse_ast_stmts(astroot);
             break;
         }
         case ast_push_scope:
         {
-            current_scope = unused_scope;
-            ++unused_scope;
-            astroot->scope_no = current_scope;
-            push_symbol_table();
-            push_persistent_symbol_table();
+            traverse_ast_push_scope(astroot);
             break;
         }
         case ast_pop_scope:
         {
-            printf("Size of scope: %d bytes\n",persistent_symbol_table->size);
-            pop_symbol_table();
-            if(current_symbol_table != NULL){
-                current_scope = current_symbol_table->scope;
-                adjust_persistent_symbol_table();
-            }
-            astroot->scope_no = current_scope;
+            traverse_ast_pop_scope(astroot);
             break;
         }
         case ast_start_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_start_stmt(astroot);
             break;
         }
         case ast_func_stmt:
         {
-            astroot->scope_no = current_scope;
-            add_params(astroot);
+            traverse_ast_func_stmt(astroot);
             break;
         }
         case ast_func_list_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_func_list_stmt(astroot);
             break;
         }
         case ast_param_list_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_param_list_stmt(astroot);
             break;
         }
         case ast_param_stmt:
         {
-            astroot->scope_no = current_scope;
-            astroot->symbol->size = get_size(astroot->symbol->type);
-            push_symbol(astroot->symbol);
+            traverse_ast_param_stmt(astroot);
             break;
         }
         case ast_arg_list_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_arg_list_stmt(astroot);
             break;
         }
         case ast_func_call_stmt:
         {
-            astroot->scope_no = current_scope;
-            check_params(astroot);
+            traverse_ast_func_call_stmt(astroot);
             break;
         }
         case ast_stmt_list:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_stmt_list(astroot);
             break;
         }
         case ast_assgn_stmt:
         {
-            astroot->scope_no = current_scope;
-            astroot->val = astroot->child[1]->val;
-            astroot->datatype = astroot->child[0]->datatype;
-            
-            typecheck(astroot);
-            // Generate Code (Considering only integers for now)
-            printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
-            fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
+            traverse_ast_assgn_stmt(astroot);
             break;
         }
         case ast_cond_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_cond_stmt(astroot);
             break;
+        }
+        case ast_if_stmt:
+        {
+            traverse_ast_if_stmt(astroot);
         }
         case ast_loop_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_loop_stmt(astroot);
             break;
         }
         case ast_decl_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_decl_stmt(astroot);
             break;
         }
         case ast_array_decl_stmt:
         {
-            astroot->scope_no = current_scope;
-            astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
-            push_symbol(astroot->symbol);
-            printf("Array size: %d\n",astroot->symbol->size);
+            traverse_ast_array_decl_stmt(astroot);
             break;
         }
         case ast_expressions_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_expressions_stmt(astroot);
             break;
         }
         case ast_arry_assgn_stmt:
         {
-            astroot->scope_no = current_scope;
-            Symbol *symbol = search_symbol(astroot->symbol->name);
-            if(symbol == NULL){
-                printf("Identifier undeclared\n");
-            }
-            if(symbol->is_array != 1){
-                printf("Identifier not an array type.\n");
-                exit(0);
-            }
-            if(astroot->child[1]->datatype != INT_TYPE){
-                printf("array subscript not an integer\n");
-                exit(0);
-            }
-            astroot->datatype = symbol->type;
+            traverse_ast_arry_assgn_stmt(astroot);
             break;
         }
         case ast_array_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_array_stmt(astroot);
             break;
         }
         case ast_variable_stmt:
         {
-            astroot->scope_no = current_scope;
-            astroot->symbol->type = astroot->datatype;
-            Symbol* symbol = search_symbol(astroot->symbol->name);
-            if(symbol != NULL){
-                printf("Identified %s already declared in current scope\n",symbol->name);
-                exit(0);
-            }
-            astroot->symbol->size = get_size(astroot->symbol->type);
-            astroot->symbol->offset = global_offset;
-            global_offset += astroot->symbol->size;
-            push_symbol(astroot->symbol);
-
-            // Generate Code
-            fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->symbol->type));// allocate stack frame
-
+            traverse_ast_variable_stmt(astroot);
             break;
         }
         case ast_var_list:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_var_list(astroot);
             break;
         }
         case ast_var_expr:
         {
-            
-            astroot->scope_no = current_scope;
-            Symbol *symbol = search_symbol(astroot->symbol->name);
-            if (symbol == NULL)
-            {
-                printf("\nError: Variable %s not declared\n", astroot->symbol->name);
-                exit(0);
-            }
-            astroot->symbol = symbol;
-            astroot->datatype = symbol->type;
-
-            // Generate code
-            int reg = get_register();
-            astroot->reg = reg;
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
-
+            traverse_ast_var_expr(astroot);
             break;
         }
         case ast_or_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_or_stmt(astroot);
             break;
         }
         case ast_and_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_and_stmt(astroot);
             break;
         }
         case ast_eq_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_eq_stmt(astroot);
             break;
         }
         case ast_neq_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_neq_stmt(astroot);
             break;
         }
         case ast_lt_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_lt_stmt(astroot);
             break;
         }
         case ast_gt_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_gt_stmt(astroot);
             break;
         }
         case ast_geq_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_geq_stmt(astroot);
             break;
         }
         case ast_leq_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_leq_stmt(astroot);
             break;
         }
         case ast_add_stmt:
         {
-            astroot->scope_no = current_scope;
-            binary_op_type_checking(astroot);
-            
-            // Generate Code (Considering only integers for now)
-            int reg0 = astroot->child[0]->reg;
-            int reg1 = astroot->child[1]->reg;
-            astroot->reg = reg0;
-            fprintf(fp, "    add $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+            traverse_ast_add_stmt(astroot);
             break;
         }
         case ast_sub_stmt:
         {
-            astroot->scope_no = current_scope;
-            binary_op_type_checking(astroot);
-
-            // Generate Code (Considering only integers for now)
-            int reg0 = astroot->child[0]->reg;
-            int reg1 = astroot->child[1]->reg;
-            astroot->reg = reg0;
-            fprintf(fp, "    sub $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+            traverse_ast_sub_stmt(astroot);
             break;
         }
         case ast_mul_stmt:
         {
-            astroot->scope_no = current_scope;
-            binary_op_type_checking(astroot);
-
-            // Generate Code (Considering only integers for now)
-            int reg0 = astroot->child[0]->reg;
-            int reg1 = astroot->child[1]->reg;
-            astroot->reg = reg0;
-            fprintf(fp, "    mul $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+            traverse_ast_mul_stmt(astroot);
             break;
         }
         case ast_div_stmt:
         {
-            astroot->scope_no = current_scope;
-            binary_op_type_checking(astroot);
-
-            // Generate Code (Considering only integers for now)
-            int reg0 = astroot->child[0]->reg;
-            int reg1 = astroot->child[1]->reg;
-            astroot->reg = reg0;
-            fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+            traverse_ast_div_stmt(astroot);
             break;
         }
         case ast_unary_not:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_unary_not(astroot);
             break;
         }
         case ast_unary_add:
         {
-            astroot->scope_no = current_scope;
-            astroot->datatype = astroot->child[0]->datatype;
+            traverse_ast_unary_add(astroot);
             break;
         }
         case ast_unary_sub:
         {
-            astroot->scope_no = current_scope;
-            astroot->datatype = astroot->child[0]->datatype;
+            traverse_ast_unary_sub(astroot);
             break;
         }
         case ast_const_val:
         {
-            astroot->scope_no = current_scope;
-            // Generate Code (Considering only integers for now)
-            int reg1 = get_register();
-            astroot->reg = reg1;
-            fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.int_val);
+            traverse_ast_const_val(astroot);
             break;
         }
         case ast_print_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_print_stmt(astroot);
             break;
         }
         case ast_input_stmt:
         {
-            astroot->scope_no = current_scope;
-            Symbol *symbol = search_symbol(astroot->symbol->name);
-            if(symbol == NULL){
-                printf("Identifier undeclared\n");
-                exit(0);
-            }
+            traverse_ast_input_stmt(astroot);
             break;
         }
         case ast_return_stmt:
         {
-            astroot->scope_no = current_scope;
+            traverse_ast_return_stmt(astroot);
             break;
         }
         default:
         {
-            astroot->scope_no = current_scope;
             break;
         }
     }

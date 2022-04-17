@@ -14,6 +14,10 @@ extern int current_scope;
 extern int unused_scope;
 FILE *fp;
 
+int registers[18];      // Registers from $8 to $25
+int lru_counter[18];
+int global_counter = 1;
+
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
@@ -23,6 +27,8 @@ void check_params(AST* astroot);
 bool compatible_types(int type1,int type2);
 void generate_code(AST* astroot);
 int get_size(int type);
+void update_counter();
+int get_register();
 
 int main(int argc, char *argv[])
 {
@@ -39,8 +45,6 @@ int main(int argc, char *argv[])
     unused_scope = 0;
     current_scope = unused_scope;
     ++unused_scope;
-    push_symbol_table();
-    push_persistent_symbol_table();
     traverse(astroot);
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
@@ -83,6 +87,8 @@ void generate_code(AST* astroot){
         }
         case ast_pop_scope:
         {
+            current_scope = astroot->scope_no;
+            adjust_persistent_symbol_table();
             break;
         }
         case ast_start_stmt:
@@ -192,6 +198,7 @@ void generate_code(AST* astroot){
         }
         case ast_add_stmt:
         {
+
             break;
         }
         case ast_sub_stmt:
@@ -652,4 +659,20 @@ int get_size(int type){
         return 1;
     }
     return 0;
+}
+
+void update_counter() {
+    global_counter++;
+}
+
+int get_register () {
+    int min_index = 0;
+    for (int i = 0; i < 18; i++) {
+        if (lru_counter[i] < lru_counter[min_index])
+            min_index = i;
+    }
+    lru_counter[min_index] = global_counter;
+    update_counter();
+
+    return min_index; // Offset as reg starts from 8
 }

@@ -1,5 +1,7 @@
 begin {
     int a,b,c,d;
     a=5;
-    b=3.2523;
+    b=7;
+    c=a+b;
+    d = c/b;
 }

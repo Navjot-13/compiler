@@ -69,6 +69,7 @@ typedef struct AST{
                 char str_val[300];
                 bool bool_val;
         } val;
+        int reg;
         struct AST *child[4];
 
 } AST;

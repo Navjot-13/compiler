@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
     fprintf(fp,"main:\n");
+    fprintf(fp,"    la $fp, 0($sp)\n");
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);
@@ -419,6 +420,10 @@ void traverse(AST *astroot)
             astroot->symbol->offset = global_offset;
             global_offset += astroot->symbol->size;
             push_symbol(astroot->symbol);
+
+            // Generate Code
+            fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->symbol->type));// allocate stack frame
+
             break;
         }
         case ast_var_list:
@@ -438,6 +443,12 @@ void traverse(AST *astroot)
             }
             astroot->symbol = symbol;
             astroot->datatype = symbol->type;
+
+            // Generate code
+            int reg = get_register();
+            astroot->reg = reg;
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
+
             break;
         }
         case ast_or_stmt:
@@ -486,12 +497,10 @@ void traverse(AST *astroot)
             binary_op_type_checking(astroot);
             
             // Generate Code (Considering only integers for now)
-            int reg1 = get_register();
-            int reg2 = get_register();
-            astroot->reg = reg1;
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
-            fprintf(fp, "    add $%d, $%d, $%d\n", reg1, reg1, reg2);
+            int reg0 = astroot->child[0]->reg;
+            int reg1 = astroot->child[1]->reg;
+            astroot->reg = reg0;
+            fprintf(fp, "    add $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
             break;
         }
         case ast_sub_stmt:
@@ -500,12 +509,10 @@ void traverse(AST *astroot)
             binary_op_type_checking(astroot);
 
             // Generate Code (Considering only integers for now)
-            int reg1 = get_register();
-            int reg2 = get_register();
-            astroot->reg = reg1;
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
-            fprintf(fp, "    sub $%d, $%d, $%d\n", reg1, reg1, reg2);
+            int reg0 = astroot->child[0]->reg;
+            int reg1 = astroot->child[1]->reg;
+            astroot->reg = reg0;
+            fprintf(fp, "    sub $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
             break;
         }
         case ast_mul_stmt:
@@ -514,12 +521,10 @@ void traverse(AST *astroot)
             binary_op_type_checking(astroot);
 
             // Generate Code (Considering only integers for now)
-            int reg1 = get_register();
-            int reg2 = get_register();
-            astroot->reg = reg1;
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
-            fprintf(fp, "    mul $%d, $%d, $%d\n", reg1, reg1, reg2);
+            int reg0 = astroot->child[0]->reg;
+            int reg1 = astroot->child[1]->reg;
+            astroot->reg = reg0;
+            fprintf(fp, "    mul $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
             break;
         }
         case ast_div_stmt:
@@ -528,12 +533,10 @@ void traverse(AST *astroot)
             binary_op_type_checking(astroot);
 
             // Generate Code (Considering only integers for now)
-            int reg1 = get_register();
-            int reg2 = get_register();
-            astroot->reg = reg1;
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
-            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
-            fprintf(fp, "    div $%d, $%d, $%d\n", reg1, reg1, reg2);
+            int reg0 = astroot->child[0]->reg;
+            int reg1 = astroot->child[1]->reg;
+            astroot->reg = reg0;
+            fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
             break;
         }
         case ast_unary_not:

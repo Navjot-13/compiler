@@ -2,6 +2,7 @@ begin {
     int a,b,c,d;
     a=5;
     b=7;
-    c=a+b;
+    c=0;
+    c += a+b;
     d = c/b;
 }

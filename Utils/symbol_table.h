@@ -18,6 +18,7 @@ typedef struct Symbol {
     int is_function;
     int is_array;
     int size;
+    int offset; // offset from fp
     struct Symbol* param_list;// formal parameters for when the symbol is a function
     struct Symbol* prev;
     struct Symbol* next;

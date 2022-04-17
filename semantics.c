@@ -17,6 +17,7 @@ FILE *fp;
 int registers[18];      // Registers from $8 to $25
 int lru_counter[18];
 int global_counter = 1;
+int global_offset = 0;
 
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
@@ -348,6 +349,10 @@ void traverse(AST *astroot)
             astroot->val = astroot->child[1]->val;
             astroot->datatype = astroot->child[0]->datatype;
             typecheck(astroot);
+
+            // Generate code
+            
+
             break;
         }
         case ast_cond_stmt:
@@ -411,6 +416,8 @@ void traverse(AST *astroot)
                 exit(0);
             }
             astroot->symbol->size = get_size(astroot->symbol->type);
+            symbol->offset = global_offset;
+            global_offset += astroot->symbol->size;
             push_symbol(astroot->symbol);
             break;
         }

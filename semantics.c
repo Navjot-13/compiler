@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     fprintf(fp,"    .data\n");
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
-    fprintf(fp,"begin:\n");
+    fprintf(fp,"main:\n");
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);
@@ -498,18 +498,42 @@ void traverse(AST *astroot)
         {
             astroot->scope_no = current_scope;
             binary_op_type_checking(astroot);
+
+            // Generate Code (Considering only integers for now)
+            int reg1 = get_register();
+            int reg2 = get_register();
+            astroot->reg = reg1;
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
+            fprintf(fp, "    sub $%d, $%d, $%d\n", reg1, reg1, reg2);
             break;
         }
         case ast_mul_stmt:
         {
             astroot->scope_no = current_scope;
             binary_op_type_checking(astroot);
+
+            // Generate Code (Considering only integers for now)
+            int reg1 = get_register();
+            int reg2 = get_register();
+            astroot->reg = reg1;
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
+            fprintf(fp, "    mul $%d, $%d, $%d\n", reg1, reg1, reg2);
             break;
         }
         case ast_div_stmt:
         {
             astroot->scope_no = current_scope;
             binary_op_type_checking(astroot);
+
+            // Generate Code (Considering only integers for now)
+            int reg1 = get_register();
+            int reg2 = get_register();
+            astroot->reg = reg1;
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
+            fprintf(fp, "    lw $%d, -%d($fp)\n", reg2, astroot->child[1]->symbol->offset);
+            fprintf(fp, "    div $%d, $%d, $%d\n", reg1, reg1, reg2);
             break;
         }
         case ast_unary_not:

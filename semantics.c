@@ -350,7 +350,7 @@ void traverse_ast_var_expr(AST* astroot)
     fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
 
     if (astroot->flag == 1) {
-        fprintf(fp, "    bez $%d, __%d__\n", reg, astroot->fal);
+        fprintf(fp, "    beqz $%d, __%d__\n", reg, astroot->fal);
         fprintf(fp, "    j __%d__\n", astroot->tru);
     }
 }

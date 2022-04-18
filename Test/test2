@@ -1,5 +1,8 @@
 begin {
     int a,b;
-    a=input();
-    b=5;
+    a=6;
+    b=6;
+    if (a == b) {
+        b = 5;
+    }
 }

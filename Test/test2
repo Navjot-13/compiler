@@ -5,4 +5,8 @@ begin {
     if (a == b) {
         b = 5;
     }
+    ifloop(a > 0){
+        b = 5;
+        a--;
+    }
 }

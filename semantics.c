@@ -148,7 +148,9 @@ void traverse_ast_stmt_list(AST* astroot)
         astroot->child[1]->next = astroot->next;
     }
     traverse(astroot->child[0]);
-    fprintf(fp,"__%d__:\n",astroot->child[0]->next);
+    if(astroot->child[0]->type == ast_cond_stmt || astroot->child[0]->type == ast_loop_stmt){
+        fprintf(fp,"__%d__:\n",astroot->child[0]->next);
+    }
     traverse(astroot->child[1]);
 }
 

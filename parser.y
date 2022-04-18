@@ -581,11 +581,11 @@ cond_stmt2:     ELSE '{' stmt_list '}'
 
 
 
-loop_stmt:      LP '(' expr ')' statements 
+loop_stmt:      LP '(' expr ')' '{' stmt_list '}'
                 {
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
+                        $$ = make_node(ast_loop_stmt,$3,$6,NULL,NULL);
                 }
                 ;
 

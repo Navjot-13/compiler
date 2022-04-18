@@ -201,13 +201,7 @@ void traverse_ast_cond_stmt(AST* astroot)
         }
     }
 }
-
-void traverse_ast_if_stmt(AST* astroot){
-    for(int i = 0; i < 4;++i){
-        traverse(astroot->child[i]);
-    }
-}
-        
+      
 void traverse_ast_loop_stmt(AST* astroot)
 {
     astroot->child[0]->flag = 1;
@@ -217,6 +211,7 @@ void traverse_ast_loop_stmt(AST* astroot)
     astroot->child[1]->next = begin;
     fprintf(fp,"__%d__\n",begin);
     traverse(astroot->child[0]);
+    fprintf(fp,"__%d__\n",astroot->child[0]->tru);
     traverse(astroot->child[1]);
     fprintf(fp,"    j %d\n",begin);
 }
@@ -350,7 +345,7 @@ void traverse_ast_var_expr(AST* astroot)
     fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
 
     if (astroot->flag == 1) {
-        fprintf(fp, "    beqz $%d, __%d__\n", reg, astroot->fal);
+        fprintf(fp, "    bez $%d, __%d__\n", reg, astroot->fal);
         fprintf(fp, "    j __%d__\n", astroot->tru);
     }
 }
@@ -689,22 +684,14 @@ void traverse_ast_print_stmt(AST* astroot)
 
 void traverse_ast_input_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        traverse(astroot->child[i]);
+    }
     astroot->scope_no = current_scope;
-    Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
+    Symbol *symbol = search_symbol(astroot->symbol->name);
     if(symbol == NULL){
         printf("Identifier undeclared\n");
         exit(0);
-    }
-
-    // For integer
-    if (symbol->type == INT_TYPE) {
-        fprintf(fp, "    li $v0, 5\n");
-        fprintf(fp, "    syscall\n");
-
-        int reg1 = get_register();
-        astroot->reg = reg1;
-        fprintf(fp, "    move $%d, $v0\n", reg1);
-        update_register(reg1);
     }
 }
 
@@ -786,10 +773,6 @@ void traverse(AST *astroot)
         {
             traverse_ast_cond_stmt(astroot);
             break;
-        }
-        case ast_if_stmt:
-        {
-            traverse_ast_if_stmt(astroot);
         }
         case ast_loop_stmt:
         {

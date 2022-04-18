@@ -181,6 +181,8 @@ void traverse_ast_cond_stmt(AST* astroot)
             astroot->child[0]->child[2]->next = astroot->child[1]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
             traverse(astroot->child[0]->child[1]);
+            fprintf(fp,"   bnez $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->tru);
+            fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
             traverse(astroot->child[0]->child[2]);
             fprintf(fp,"    j __%d__\n",astroot->next);
@@ -192,6 +194,8 @@ void traverse_ast_cond_stmt(AST* astroot)
             astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
             traverse(astroot->child[0]->child[1]);
+            fprintf(fp,"   bnez $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->tru);
+            fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
             traverse(astroot->child[0]->child[2]);
             traverse(astroot->child[0]->child[3]);

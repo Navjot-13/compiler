@@ -1,6 +1,6 @@
 begin {
     int a,b;
-    a=6;
+    a=input();
     b=6;
     if (a == b) {
         b = 5;

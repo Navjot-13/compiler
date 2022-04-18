@@ -179,12 +179,20 @@ void traverse_ast_cond_stmt(AST* astroot)
             traverse(astroot->child[0]->child[2]);
             fprintf(fp,"    j __%d__\n",astroot->next);
             fprintf(fp,"__%d__\n",astroot->child[0]->child[0]->fal);
+            traverse(astroot->child[0]->child[3]);
             traverse(astroot->child[1]);
         }
         else{
             astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
-            traverse(astroot->child[0]->child[0]);
+            traverse(astroot->child[0]->child[1]);
+            traverse(astroot->child[0]->child[2]);
+            traverse(astroot->child[0]->child[3]);
+        }
+    }
+    else{
+        for(int i = 0; i < 4;++i){
+            traverse(astroot->child[i]);
         }
     }
 }
@@ -197,12 +205,14 @@ void traverse_ast_if_stmt(AST* astroot){
         
 void traverse_ast_loop_stmt(AST* astroot)
 {
+    int begin = label++;
     astroot->child[0]->tru = label++;
-    astroot->child[1]->fal = astroot->next;
-    astroot->child[1]->next = label++;
-    for(int i = 0; i < 4;++i){
-        traverse(astroot->child[i]);
-    }
+    astroot->child[0]->fal = astroot->next;
+    astroot->child[1]->next = begin;
+    fprintf(fp,"__%d__\n",begin);
+    traverse(astroot->child[0]);
+    traverse(astroot->child[1]);
+    fprintf(fp,"    j %d\n",begin);
 }
         
 void traverse_ast_decl_stmt(AST* astroot)

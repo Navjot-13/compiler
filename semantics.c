@@ -346,6 +346,8 @@ void traverse_ast_eq_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp, "    beq $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+    fprintf(fp, "    j __%d__\n", astroot->fal);
 }
         
 void traverse_ast_neq_stmt(AST* astroot)
@@ -353,6 +355,8 @@ void traverse_ast_neq_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp, "    bne $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+    fprintf(fp, "    j __%d__\n", astroot->fal);
 }
         
 void traverse_ast_lt_stmt(AST* astroot)
@@ -360,6 +364,8 @@ void traverse_ast_lt_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp, "    blt $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+    fprintf(fp, "    j __%d__\n", astroot->fal);
 }
         
 void traverse_ast_gt_stmt(AST* astroot)
@@ -367,6 +373,8 @@ void traverse_ast_gt_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp, "    bgt $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+    fprintf(fp, "    j __%d__\n", astroot->fal);
 }
 
 void traverse_ast_geq_stmt(AST* astroot)
@@ -374,6 +382,8 @@ void traverse_ast_geq_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp, "    bge $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+    fprintf(fp, "    j __%d__\n", astroot->fal);
 }
 
 void traverse_ast_leq_stmt(AST* astroot)
@@ -381,6 +391,8 @@ void traverse_ast_leq_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp, "    ble $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+    fprintf(fp, "    j __%d__\n", astroot->fal);
 }
 
 void traverse_ast_add_stmt(AST* astroot)

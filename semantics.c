@@ -416,8 +416,8 @@ void traverse_ast_eq_stmt(AST* astroot)
         traverse(astroot->child[i]);
     }
     if (astroot->flag == 1) {
-        fprintf(fp, "    beq $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->fal);
-        fprintf(fp, "    j __%d__\n", astroot->tru);
+        fprintf(fp, "    beq $%d, $%d, __%d__\n", astroot->child[0]->reg, astroot->child[1]->reg, astroot->tru);
+        fprintf(fp, "    j __%d__\n", astroot->fal);
     } else {
         int reg0 = astroot->child[0]->reg;
         int reg1 = astroot->child[1]->reg;

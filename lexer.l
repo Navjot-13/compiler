@@ -53,11 +53,11 @@ letter_ [A-Za-z_]
 
 "/="                            return DEQ;
 
-"and" | "&&"			        return AND;     
+"and"|"&&"			        return AND;     
 
-"or" | "||"	                    return OR;
+"or"|"||"	                    return OR;
 
-"not" | "!"                     return NOT;
+"not"|"!"                     return NOT;
 
 "+"                             return ADD;
  

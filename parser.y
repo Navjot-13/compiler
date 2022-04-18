@@ -221,7 +221,7 @@ print_stmt:     PRINT '(' expr ')' SCOL
 
 input_stmt:     variable ASSIGN INPUT '(' ')' SCOL
                 {
-                       $$ = $1;
+                       $$ = make_node(ast_input_stmt,$1,NULL,NULL,NULL);
                 }
                 ;
 

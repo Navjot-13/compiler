@@ -686,14 +686,22 @@ void traverse_ast_print_stmt(AST* astroot)
 
 void traverse_ast_input_stmt(AST* astroot)
 {
-    for(int i = 0; i < 4;++i){
-        traverse(astroot->child[i]);
-    }
     astroot->scope_no = current_scope;
-    Symbol *symbol = search_symbol(astroot->symbol->name);
+    Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
     if(symbol == NULL){
         printf("Identifier undeclared\n");
         exit(0);
+    }
+
+    // For integer
+    if (symbol->type == INT_TYPE) {
+        fprintf(fp, "    li $v0, 5\n");
+        fprintf(fp, "    syscall\n");
+
+        int reg1 = get_register();
+        astroot->reg = reg1;
+        fprintf(fp, "    move $%d, $v0\n", reg1);
+        update_register(reg1);
     }
 }
 

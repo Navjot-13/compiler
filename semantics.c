@@ -159,12 +159,12 @@ void traverse_ast_assgn_stmt(AST* astroot)
         
 void traverse_ast_cond_stmt(AST* astroot)
 {
-
+    // check that it is not an else construct
     if(astroot->child[0]->child[0]){
         astroot->child[0]->child[0]->tru = label++;
         if(astroot->child[1]){
             astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
-        } 
+        }
         else{
             astroot->child[0]->child[0]->fal = label++;
             astroot->child[0]->child[2]->next = astroot->next;

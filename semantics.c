@@ -209,11 +209,11 @@ void traverse_ast_loop_stmt(AST* astroot)
     astroot->child[0]->tru = label++;
     astroot->child[0]->fal = astroot->next;
     astroot->child[1]->next = begin;
-    fprintf(fp,"__%d__\n",begin);
+    fprintf(fp,"__%d__:\n",begin);
     traverse(astroot->child[0]);
-    fprintf(fp,"__%d__\n",astroot->child[0]->tru);
+    fprintf(fp,"__%d__:\n",astroot->child[0]->tru);
     traverse(astroot->child[1]);
-    fprintf(fp,"    j %d\n",begin);
+    fprintf(fp,"    j __%d__\n",begin);
 }
         
 void traverse_ast_decl_stmt(AST* astroot)
@@ -345,7 +345,7 @@ void traverse_ast_var_expr(AST* astroot)
     fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
 
     if (astroot->flag == 1) {
-        fprintf(fp, "    bez $%d, __%d__\n", reg, astroot->fal);
+        fprintf(fp, "    beqz $%d, __%d__\n", reg, astroot->fal);
         fprintf(fp, "    j __%d__\n", astroot->tru);
     }
 }

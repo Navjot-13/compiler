@@ -312,7 +312,7 @@ void traverse_ast_or_stmt(AST* astroot)
     astroot->child[1]->tru = astroot->tru;
     astroot->child[1]->fal = astroot->fal;
     for(int i = 0; i < 4;++i){
-        traverse(astroot);
+        traverse(astroot->child[i]);
         if (i == 0)
             fprintf(fp, "__%d__:\n", astroot->child[0]->fal);
     }
@@ -327,6 +327,8 @@ void traverse_ast_and_stmt(AST* astroot)
     astroot->child[1]->fal = astroot->fal;
     for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
+        if (i == 0)
+            fprintf(fp, "__%d__:\n", astroot->child[0]->tru);
     }
 }
     

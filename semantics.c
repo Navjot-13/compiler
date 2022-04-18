@@ -170,18 +170,27 @@ void traverse_ast_cond_stmt(AST* astroot)
     // check that it is not an else construct
     if(astroot->child[0]->child[0]){
         astroot->child[0]->child[0]->tru = label++;
+        // check if it has a corresponding else if/else 
         if(astroot->child[1]){
-            astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
+            astroot->child[0]->child[0]->fal = label++;
+            astroot->child[0]->child[2]->next = astroot->child[1]->next = astroot->next;
+            traverse(astroot->child[0]->child[0]);
+            traverse(astroot->child[0]->child[1]);
+            traverse(astroot->child[0]->child[2]);
+            fprintf(fp,"    j __%d__\n",astroot->next);
+            fprintf(fp,"__%d__\n",astroot->child[0]->child[0]->fal);
+            traverse(astroot->child[1]);
         }
         else{
-            astroot->child[0]->child[0]->fal = label++;
-            astroot->child[0]->child[2]->next = astroot->next;
-            if(astroot->child[1]){
-                astroot->child[1]->next = astroot->next;
-            }
+            astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
+            traverse(astroot->child[0]->child[0]);
+            traverse(astroot->child[0]->child[0]);
         }
     }
-    for(int i = 0; i <4;++i){
+}
+
+void traverse_ast_if_stmt(AST* astroot){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
 }
@@ -487,7 +496,7 @@ void traverse_ast_print_stmt(AST* astroot)
 
 void traverse_ast_input_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
     astroot->scope_no = current_scope;
@@ -495,12 +504,6 @@ void traverse_ast_input_stmt(AST* astroot)
     if(symbol == NULL){
         printf("Identifier undeclared\n");
         exit(0);
-    }
-}
-
-void traverse_ast_if_stmt(AST* astroot){
-    for(int i = 0; i < 4;++i){
-        traverse(astroot->child[i]);
     }
 }
 

@@ -34,7 +34,7 @@ int yyerror(char *);
 %type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program X func_list 
 function params param_list param_type cond_stmt2 args arg_list expressions expr cond_or_stmt cond_and_stmt 
 eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L print_stmt 
-input_stmt printable
+input_stmt
 %%
 
 program:        func_list  BGN statements 
@@ -212,16 +212,11 @@ stmt:           assign_stmt
                 }
                 ;
 
-print_stmt:     PRINT '(' printable ')' SCOL
+print_stmt:     PRINT '(' expr ')' SCOL
                 {
                         $$ = make_node(ast_print_stmt,$3,NULL,NULL,NULL);
                 }
                 ;
-
-printable:      expr
-                {      
-                        $$ = $1;
-                }
 
 
 input_stmt:     variable ASSIGN INPUT '(' ')' SCOL

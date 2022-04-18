@@ -29,6 +29,7 @@ bool compatible_types(int type1,int type2);
 void generate_code(AST* astroot);
 int get_size(int type);
 void update_counter();
+void update_register(int index);
 int get_register();
 
 int main(int argc, char *argv[])
@@ -57,6 +58,12 @@ int main(int argc, char *argv[])
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);
+
+    for (int i = 0; i < 18; ++i)
+    {
+        printf("%d ", lru_counter[i]);
+    }
+    printf("\n");
 }
 
 void traverse_ast_stmts(AST* astroot)
@@ -155,6 +162,7 @@ void traverse_ast_assgn_stmt(AST* astroot)
     // Generate Code (Considering only integers for now)
     printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
     fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
+    astroot->reg = astroot->child[1]->reg;
 }
         
 void traverse_ast_cond_stmt(AST* astroot)
@@ -305,7 +313,10 @@ void traverse_ast_or_stmt(AST* astroot)
     astroot->child[1]->fal = astroot->fal;
     for(int i = 0; i < 4;++i){
         traverse(astroot);
+        if (i == 0)
+            fprintf(fp, "__%d__:\n", astroot->child[0]->fal);
     }
+
 }
 
 void traverse_ast_and_stmt(AST* astroot)
@@ -374,6 +385,8 @@ void traverse_ast_add_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    add $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_sub_stmt(AST* astroot)
@@ -389,6 +402,8 @@ void traverse_ast_sub_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    sub $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_mul_stmt(AST* astroot)
@@ -404,6 +419,8 @@ void traverse_ast_mul_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    mul $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_div_stmt(AST* astroot)
@@ -418,6 +435,8 @@ void traverse_ast_div_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_unary_not(AST* astroot)
@@ -842,4 +861,9 @@ int get_register () {
     update_counter();
 
     return min_index+8; // Offset as reg starts from 8
+}
+
+void update_register(int index) {
+    lru_counter[index-8] = global_counter;
+    update_counter();
 }

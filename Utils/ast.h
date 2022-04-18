@@ -70,6 +70,9 @@ typedef struct AST{
                 bool bool_val;
         } val;
         int reg;
+        int next;// label for next statement
+        int tru;// label for representing true
+        int fal;// label for representing false
         struct AST *child[4];
 
 } AST;

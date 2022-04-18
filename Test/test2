@@ -2,6 +2,7 @@ begin {
     int a,b;
     a=5;
     b=5;
-    a or b;
-    a <= b;
+    if(a==b) {
+        b = 4;
+    }
 }

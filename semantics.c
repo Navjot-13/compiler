@@ -369,6 +369,8 @@ void traverse_ast_or_stmt(AST* astroot)
     update_register(reg0);
     update_register(reg1);
     astroot->reg = reg0;
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg0, reg0);
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg1, reg1);
     fprintf(fp, "    or $%d, $%d, $%d\n", reg0, reg0, reg1);
 
 }
@@ -392,6 +394,8 @@ void traverse_ast_and_stmt(AST* astroot)
     update_register(reg0);
     update_register(reg1);
     astroot->reg = reg0;
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg0, reg0);
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg1, reg1);
     fprintf(fp, "    and $%d, $%d, $%d\n", reg0, reg0, reg1);
 }
     

@@ -162,7 +162,7 @@ void traverse_ast_assgn_stmt(AST* astroot)
     // Generate Code (Considering only integers for now)
     printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
     fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
-    update_register(astroot->child[1]->reg);
+    astroot->reg = astroot->child[1]->reg;
 }
         
 void traverse_ast_cond_stmt(AST* astroot)
@@ -313,7 +313,10 @@ void traverse_ast_or_stmt(AST* astroot)
     astroot->child[1]->fal = astroot->fal;
     for(int i = 0; i < 4;++i){
         traverse(astroot);
+        if (i == 0)
+            fprintf(fp, "__%d__:\n", astroot->child[0]->fal);
     }
+
 }
 
 void traverse_ast_and_stmt(AST* astroot)

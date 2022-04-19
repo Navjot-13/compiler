@@ -33,6 +33,7 @@ void generate_code(AST* astroot);
 int get_size(int type);
 void update_counter();
 void update_register(int index);
+void update_fregister(int index);
 int get_register();
 int get_fregister();
 
@@ -972,6 +973,11 @@ int get_fregister () {
     update_fcounter();
 
     return min_index+8; // Offset as reg starts from 8
+}
+
+void update_fregister(int index){
+    lru_fcounter[index-8] = global_fcounter;
+    update_fcounter();
 }
 
 void update_register(int index) {

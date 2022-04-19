@@ -416,13 +416,13 @@ comp_stmt:      comp_stmt comp_op arithmetic_stmt1
 
 comp_op:        '>'     
                 {
-                        $$ = ast_lt_stmt;
+                        $$ = ast_gt_stmt;
                 }
                     
                 | '<'  
                 
                 {
-                        $$ = ast_gt_stmt;
+                        $$ = ast_lt_stmt;
                 }
                 
                 | GEQ  

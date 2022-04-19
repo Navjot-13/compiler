@@ -29,6 +29,7 @@ bool compatible_types(int type1,int type2);
 void generate_code(AST* astroot);
 int get_size(int type);
 void update_counter();
+void update_register(int index);
 int get_register();
 
 int main(int argc, char *argv[])
@@ -57,6 +58,12 @@ int main(int argc, char *argv[])
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
     fclose(fp);
+
+    for (int i = 0; i < 18; ++i)
+    {
+        printf("%d ", lru_counter[i]);
+    }
+    printf("\n");
 }
 
 void traverse_ast_stmts(AST* astroot)
@@ -64,9 +71,10 @@ void traverse_ast_stmts(AST* astroot)
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
     }
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp,"__%d__:\n",astroot->next);
 }
 
 void traverse_ast_push_scope(AST* astroot)
@@ -139,9 +147,11 @@ void traverse_ast_stmt_list(AST* astroot)
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
     }
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
+    traverse(astroot->child[0]);
+    if(astroot->child[0]->type == ast_cond_stmt || astroot->child[0]->type == ast_loop_stmt){
+        fprintf(fp,"__%d__:\n",astroot->child[0]->next);
     }
+    traverse(astroot->child[1]);
 }
 
 void traverse_ast_assgn_stmt(AST* astroot)
@@ -155,37 +165,61 @@ void traverse_ast_assgn_stmt(AST* astroot)
     // Generate Code (Considering only integers for now)
     printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
     fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
+    astroot->reg = astroot->child[1]->reg;
 }
         
 void traverse_ast_cond_stmt(AST* astroot)
 {
-
+    
+    // check that it is not an else construct
     if(astroot->child[0]->child[0]){
+        astroot->child[0]->child[0]->flag = 1;
         astroot->child[0]->child[0]->tru = label++;
+        // check if it has a corresponding else if/else 
         if(astroot->child[1]){
-            astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
-        } 
-        else{
             astroot->child[0]->child[0]->fal = label++;
-            astroot->child[0]->child[2]->next = astroot->next;
-            if(astroot->child[1]){
-                astroot->child[1]->next = astroot->next;
-            }
+            astroot->child[0]->child[2]->next = astroot->child[1]->next = astroot->next;
+            traverse(astroot->child[0]->child[0]);
+            traverse(astroot->child[0]->child[1]);
+            fprintf(fp,"   bnez $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->tru);
+            fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
+            fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
+            traverse(astroot->child[0]->child[2]);
+            fprintf(fp,"    j __%d__\n",astroot->next);
+            fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->fal);
+            traverse(astroot->child[0]->child[3]);
+            traverse(astroot->child[1]);
+        }
+        else{
+            astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
+            traverse(astroot->child[0]->child[0]);
+            traverse(astroot->child[0]->child[1]);
+            fprintf(fp,"   bnez $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->tru);
+            fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
+            fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
+            traverse(astroot->child[0]->child[2]);
+            traverse(astroot->child[0]->child[3]);
         }
     }
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
+    else{
+        for(int i = 0; i < 4;++i){
+            traverse(astroot->child[i]);
+        }
     }
 }
-        
+      
 void traverse_ast_loop_stmt(AST* astroot)
 {
+    int begin = label++;
     astroot->child[0]->tru = label++;
-    astroot->child[1]->fal = astroot->next;
-    astroot->child[1]->next = label++;
-    for(int i = 0; i < 4;++i){
-        traverse(astroot->child[i]);
-    }
+    astroot->child[0]->fal = astroot->next;
+    astroot->child[1]->next = begin;
+    fprintf(fp,"__%d__:\n",begin);
+    traverse(astroot->child[0]);
+    fprintf(fp,"    beqz $%d, __%d__\n",astroot->child[0]->reg,astroot->next);
+    // fprintf(fp,"__%d__:\n",astroot->child[0]->tru);
+    traverse(astroot->child[1]);
+    fprintf(fp,"    j __%d__\n",begin);
 }
         
 void traverse_ast_decl_stmt(AST* astroot)
@@ -208,6 +242,11 @@ void traverse_ast_array_decl_stmt(AST* astroot)
 
 void traverse_ast_expressions_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -215,6 +254,11 @@ void traverse_ast_expressions_stmt(AST* astroot)
         
 void traverse_ast_arry_assgn_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -243,6 +287,11 @@ void traverse_ast_array_stmt(AST* astroot)
 
 void traverse_ast_variable_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -278,6 +327,11 @@ void traverse_ast_var_list(AST* astroot)
 
 void traverse_ast_var_expr(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -299,17 +353,39 @@ void traverse_ast_var_expr(AST* astroot)
 
 void traverse_ast_or_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     astroot->child[0]->tru = astroot->tru;
     astroot->child[0]->fal = label++;
     astroot->child[1]->tru = astroot->tru;
     astroot->child[1]->fal = astroot->fal;
     for(int i = 0; i < 4;++i){
-        traverse(astroot);
+        traverse(astroot->child[i]);
+        if (i == 0 && astroot->flag == 1)
+            fprintf(fp, "__%d__:\n", astroot->child[0]->fal);
     }
+
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg0, reg0);
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg1, reg1);
+    fprintf(fp, "    or $%d, $%d, $%d\n", reg0, reg0, reg1);
+
 }
 
 void traverse_ast_and_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     astroot->child[0]->tru = label++;
     astroot->child[0]->fal = astroot->fal;
     astroot->child[1]->tru = astroot->tru;
@@ -317,52 +393,132 @@ void traverse_ast_and_stmt(AST* astroot)
     for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg0, reg0);
+    fprintf(fp, "    sne $%d, $%d, $0\n", reg1, reg1);
+    fprintf(fp, "    and $%d, $%d, $%d\n", reg0, reg0, reg1);
 }
     
 void traverse_ast_eq_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    seq $%d, $%d, $%d\n", reg0, reg0, reg1);
 }
         
 void traverse_ast_neq_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    sne $%d, $%d, $%d\n", reg0, reg0, reg1);
 }
         
 void traverse_ast_lt_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    slt $%d, $%d, $%d\n", reg0, reg0, reg1);
 }
         
 void traverse_ast_gt_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    sgt $%d, $%d, $%d\n", reg0, reg0, reg1);
+
 }
 
 void traverse_ast_geq_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    sge $%d, $%d, $%d\n", reg0, reg1, reg0);
 }
 
 void traverse_ast_leq_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    int reg0 = astroot->child[0]->reg;
+    int reg1 = astroot->child[1]->reg;
+    update_register(reg0);
+    update_register(reg1);
+    astroot->reg = reg0;
+    fprintf(fp, "    sle $%d, $%d, $%d\n", reg0, reg1, reg0);
 }
 
 void traverse_ast_add_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -374,10 +530,17 @@ void traverse_ast_add_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    add $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_sub_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -389,10 +552,17 @@ void traverse_ast_sub_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    sub $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_mul_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -404,10 +574,17 @@ void traverse_ast_mul_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    mul $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_div_stmt(AST* astroot)
 {
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -418,10 +595,18 @@ void traverse_ast_div_stmt(AST* astroot)
     int reg1 = astroot->child[1]->reg;
     astroot->reg = reg0;
     fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+    update_register(reg0);
+    update_register(reg1);
 }
 
 void traverse_ast_unary_not(AST* astroot)
 {
+    astroot->child[0]->flag = astroot->flag;
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     astroot->child[0]->tru = astroot->fal;
     astroot->child[0]->fal = astroot->tru;
     for(int i = 0; i <4;++i){
@@ -431,6 +616,12 @@ void traverse_ast_unary_not(AST* astroot)
 
 void traverse_ast_unary_add(AST* astroot)
 {
+    astroot->child[0]->flag = astroot->flag;
+    for(int i = 0; i < 4;++i){
+        if(astroot->child[i]){
+            astroot->child[i]->flag = astroot->flag;
+        }
+    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -439,6 +630,7 @@ void traverse_ast_unary_add(AST* astroot)
 
 void traverse_ast_unary_sub(AST* root)
 {
+    astroot->child[0]->flag = astroot->flag;
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -466,20 +658,22 @@ void traverse_ast_print_stmt(AST* astroot)
 
 void traverse_ast_input_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
     astroot->scope_no = current_scope;
-    Symbol *symbol = search_symbol(astroot->symbol->name);
+    Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
     if(symbol == NULL){
         printf("Identifier undeclared\n");
         exit(0);
     }
-}
 
-void traverse_ast_if_stmt(AST* astroot){
-    for(int i = 0; i < 4;++i){
-        traverse(astroot->child[i]);
+    // For integer
+    if (symbol->type == INT_TYPE) {
+        fprintf(fp, "    li $v0, 5\n");
+        fprintf(fp, "    syscall\n");
+
+        int reg1 = get_register();
+        astroot->reg = reg1;
+        fprintf(fp, "    move $%d, $v0\n", reg1);
+        update_register(reg1);
     }
 }
 
@@ -561,10 +755,6 @@ void traverse(AST *astroot)
         {
             traverse_ast_cond_stmt(astroot);
             break;
-        }
-        case ast_if_stmt:
-        {
-            traverse_ast_if_stmt(astroot);
         }
         case ast_loop_stmt:
         {
@@ -842,4 +1032,9 @@ int get_register () {
     update_counter();
 
     return min_index+8; // Offset as reg starts from 8
+}
+
+void update_register(int index) {
+    lru_counter[index-8] = global_counter;
+    update_counter();
 }

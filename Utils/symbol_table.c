@@ -57,6 +57,7 @@ void push_symbol(Symbol* symbol) {
     new_symbol->param_list = symbol->param_list;
     new_symbol->size = symbol->size;
     new_symbol->offset = symbol->offset;
+    new_symbol->type = symbol->type;
     if (current_symbol_table->symbol_head == NULL) {
         current_symbol_table->symbol_head = new_symbol;
     } else {

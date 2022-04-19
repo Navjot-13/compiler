@@ -34,7 +34,7 @@ int yyerror(char *);
 %type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program X func_list 
 function params param_list param_type cond_stmt2 args arg_list expressions expr cond_or_stmt cond_and_stmt 
 eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L print_stmt 
-input_stmt printable
+input_stmt
 %%
 
 program:        func_list  BGN statements 
@@ -212,21 +212,16 @@ stmt:           assign_stmt
                 }
                 ;
 
-print_stmt:     PRINT '(' printable ')' SCOL
+print_stmt:     PRINT '(' expr ')' SCOL
                 {
                         $$ = make_node(ast_print_stmt,$3,NULL,NULL,NULL);
                 }
                 ;
 
-printable:      expr
-                {      
-                        $$ = $1;
-                }
-
 
 input_stmt:     variable ASSIGN INPUT '(' ')' SCOL
                 {
-                       $$ = $1;
+                       $$ = make_node(ast_input_stmt,$1,NULL,NULL,NULL);
                 }
                 ;
 
@@ -586,11 +581,11 @@ cond_stmt2:     ELSE '{' stmt_list '}'
 
 
 
-loop_stmt:      LP '(' expr ')' statements 
+loop_stmt:      LP '(' expr ')' '{' stmt_list '}'
                 {
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
+                        $$ = make_node(ast_loop_stmt,$3,$6,NULL,NULL);
                 }
                 ;
 

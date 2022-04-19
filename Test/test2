@@ -1,8 +1,8 @@
 begin {
-    int a,b,c,d;
-    a=5;
-    b=7;
-    c=0;
-    c += a+b;
-    d = c/b;
+    int a,b;
+    a=6;
+    b=6;
+    ifloop(a > 0){
+        a--;
+    }
 }

@@ -74,7 +74,7 @@ void traverse_ast_stmts(AST* astroot)
     for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
-    fprintf(fp,"__%d__:\n",astroot->next);
+    // fprintf(fp,"__%d__:\n",astroot->next);
 }
 
 void traverse_ast_push_scope(AST* astroot)
@@ -160,7 +160,7 @@ void traverse_ast_assgn_stmt(AST* astroot)
         traverse(astroot->child[i]);
     }
     // printf("Type 1: %d Type 2: %d\n",astroot->child[0]->type,astroot->child[1]->type);
-    printf("Datatype of left child: %d\n",astroot->child[0]->datatype);
+    // printf("Datatype of left child: %d\n",astroot->child[0]->datatype);
     astroot->val = astroot->child[1]->val;
     astroot->datatype = astroot->child[0]->datatype;  
     typecheck(astroot);

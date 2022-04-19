@@ -503,6 +503,12 @@ unary_op_stmt:  NOT unary_op_stmt
                 {    
                         $$ = $1;
                 }
+                
+                | '(' expr ')'
+                
+                {
+                        $$ = $2;
+                }
                 ;
 
 variable:       ID 

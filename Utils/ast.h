@@ -74,7 +74,6 @@ typedef struct AST{
         int next;// label for next statement
         int tru;// label for representing true
         int fal;// label for representing false
-        int flag;// for checking if expression node belongs to an if/while construct
         struct AST *child[4];
 
 } AST;

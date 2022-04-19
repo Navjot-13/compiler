@@ -2,7 +2,17 @@ begin {
     int a,b;
     a=6;
     b=6;
-    ifloop(a > 0){
-        a--;
+    ifloop(((a = 0)) or a > 0){
+        if(b > 0){
+            ifloop(b == 0 and b != a){
+                b--;
+            }
+        }
+        else if(b < 0){
+            b--;
+        }
+        else{
+            a = a - b;
+        }
     }
 }

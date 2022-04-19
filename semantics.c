@@ -210,14 +210,14 @@ void traverse_ast_cond_stmt(AST* astroot)
       
 void traverse_ast_loop_stmt(AST* astroot)
 {
-    astroot->child[0]->flag = 1;
     int begin = label++;
     astroot->child[0]->tru = label++;
     astroot->child[0]->fal = astroot->next;
     astroot->child[1]->next = begin;
     fprintf(fp,"__%d__:\n",begin);
     traverse(astroot->child[0]);
-    fprintf(fp,"__%d__:\n",astroot->child[0]->tru);
+    fprintf(fp,"    beqz $%d, __%d__\n",astroot->child[0]->reg,astroot->next);
+    // fprintf(fp,"__%d__:\n",astroot->child[0]->tru);
     traverse(astroot->child[1]);
     fprintf(fp,"    j __%d__\n",begin);
 }

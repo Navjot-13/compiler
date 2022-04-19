@@ -2,7 +2,7 @@ begin {
     int a,b;
     a=6;
     b=6;
-    if (a = 0) {
-        b = 5;
+    ifloop(a > 0){
+        a--;
     }
 }

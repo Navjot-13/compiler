@@ -17,6 +17,9 @@ FILE *fp;
 int registers[18];      // Registers from $8 to $25
 int lru_counter[18];
 int global_counter = 1;
+int fregisters[18];     // float registers
+int lru_fcounter[18];
+int global_fcounter = 1;
 int global_offset = 0;
 int label = 0;
 void assign_type (AST *astroot);
@@ -31,6 +34,7 @@ int get_size(int type);
 void update_counter();
 void update_register(int index);
 int get_register();
+int get_fregister();
 
 int main(int argc, char *argv[])
 {
@@ -643,9 +647,23 @@ void traverse_ast_const_val(AST* astroot)
         traverse(astroot->child[i]);
     }
     // Generate Code (Considering only integers for now)
-    int reg1 = get_register();
-    astroot->reg = reg1;
-    fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.int_val);
+    if(astroot->datatype == INT_TYPE){
+        int reg1 = get_register();
+        astroot->reg = reg1;
+        fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.int_val);
+    }
+    if(astroot->datatype == DOUBLE_TYPE){
+        int freg1 = get_fregister();
+        printf("in data type");
+        astroot->freg = freg1;
+        fprintf(fp, "   l.s $f%d, %lf\n", freg1, astroot->val.double_val);
+    }
+    if(astroot->datatype == BOOL_TYPE){
+
+    }
+    if(astroot->datatype == STR_TYPE){
+          
+    }
     
 }
 
@@ -1030,6 +1048,22 @@ int get_register () {
     }
     lru_counter[min_index] = global_counter;
     update_counter();
+
+    return min_index+8; // Offset as reg starts from 8
+}
+
+void update_fcounter(){
+    global_fcounter++;
+}
+
+int get_fregister () {
+    int min_index = 0;
+    for (int i = 0; i < 18; i++) {
+        if (lru_fcounter[i] < lru_fcounter[min_index])
+            min_index = i;
+    }
+    lru_fcounter[min_index] = global_fcounter;
+    update_fcounter();
 
     return min_index+8; // Offset as reg starts from 8
 }

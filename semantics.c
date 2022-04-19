@@ -446,6 +446,9 @@ void traverse_ast_lt_stmt(AST* astroot)
             astroot->child[i]->flag = astroot->flag;
         }
     }
+    for(int i = 0; i <4;++i){
+        traverse(astroot->child[i]);
+    }
     int reg0 = astroot->child[0]->reg;
     int reg1 = astroot->child[1]->reg;
     update_register(reg0);

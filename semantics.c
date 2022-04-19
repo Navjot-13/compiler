@@ -175,7 +175,6 @@ void traverse_ast_cond_stmt(AST* astroot)
     
     // check that it is not an else construct
     if(astroot->child[0]->child[0]){
-        astroot->child[0]->child[0]->flag = 1;
         astroot->child[0]->child[0]->tru = label++;
         // check if it has a corresponding else if/else 
         if(astroot->child[1]){
@@ -244,11 +243,6 @@ void traverse_ast_array_decl_stmt(AST* astroot)
 
 void traverse_ast_expressions_stmt(AST* astroot)
 {
-    for(int i = 0; i < 4;++i){
-        if(astroot->child[i]){
-            astroot->child[i]->flag = astroot->flag;
-        }
-    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -345,8 +339,6 @@ void traverse_ast_or_stmt(AST* astroot)
     astroot->child[1]->fal = astroot->fal;
     for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
-        if (i == 0 && astroot->flag == 1)
-            fprintf(fp, "__%d__:\n", astroot->child[0]->fal);
     }
     astroot->datatype = astroot->child[0]->datatype;
     int reg0 = astroot->child[0]->reg;
@@ -528,12 +520,6 @@ void traverse_ast_div_stmt(AST* astroot)
 
 void traverse_ast_unary_not(AST* astroot)
 {
-    astroot->child[0]->flag = astroot->flag;
-    for(int i = 0; i < 4;++i){
-        if(astroot->child[i]){
-            astroot->child[i]->flag = astroot->flag;
-        }
-    }
     astroot->child[0]->tru = astroot->fal;
     astroot->child[0]->fal = astroot->tru;
     for(int i = 0; i <4;++i){
@@ -543,12 +529,6 @@ void traverse_ast_unary_not(AST* astroot)
 
 void traverse_ast_unary_add(AST* astroot)
 {
-    astroot->child[0]->flag = astroot->flag;
-    for(int i = 0; i < 4;++i){
-        if(astroot->child[i]){
-            astroot->child[i]->flag = astroot->flag;
-        }
-    }
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
@@ -557,7 +537,6 @@ void traverse_ast_unary_add(AST* astroot)
 
 void traverse_ast_unary_sub(AST* root)
 {
-    astroot->child[0]->flag = astroot->flag;
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }

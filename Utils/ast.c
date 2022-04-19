@@ -15,6 +15,5 @@ AST* make_node(int type, AST *child1, AST *child2, AST *child3, AST *child4) {
         ast->symbol = NULL;
         ast->size = -1;
         ast->reg = 0;
-        ast->flag = 0;
         return ast;
 }

@@ -52,8 +52,6 @@ int main(int argc, char *argv[])
     fprintf(fp,"    .data\n");
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
-    fprintf(fp,"main:\n");
-    fprintf(fp,"    la $fp, 0($sp)\n");
     astroot->next = label++;
     traverse(astroot);
     fprintf(fp,"    jr $ra\n");
@@ -68,6 +66,8 @@ int main(int argc, char *argv[])
 
 void traverse_ast_stmts(AST* astroot)
 {
+    fprintf(fp,"main:\n");
+    fprintf(fp,"    la $fp, 0($sp)\n");
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
     }
@@ -96,9 +96,11 @@ void traverse_ast_start_stmt(AST* astroot)
 
 void traverse_ast_func_stmt(AST* astroot)
 {
+    fprintf(fp,"%s:\n",astroot->symbol->name);
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    fprintf(fp,"    jr $ra\n");
     add_params(astroot);
 }
 
@@ -128,17 +130,33 @@ void traverse_ast_param_stmt(AST* astroot)
 
 void traverse_ast_arg_list_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
+    int offset = astroot->child[1]->symbol->offset;
+    astroot->child[1]->symbol->offset -= 8;
+    push_symbol(astroot->child[1]->symbol);
+    traverse(astroot->child[1]);
+    // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
+    fprintf(fp,"    sw $%d -%d($sp)\n",astroot->child[1]->reg,offset);
+    printf("Offset: %d\n",offset);
+    traverse(astroot->child[0]);
 }
 
 void traverse_ast_func_call_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
+    int temp = global_offset;
+    global_offset = 12;
     check_params(astroot);
+    // printf("Offset: %d\n",astroot->child[1]->child[1]->symbol->offset);
+    traverse(astroot->child[0]);
+    traverse(astroot->child[1]);
+    fprintf(fp,"    la $sp, -8($sp)\n"); // allocate space for old $fp and $ra
+    fprintf(fp,"    sw $fp, 4($sp)\n"); // save old fp
+    fprintf(fp,"    sw $ra, 0($sp)\n");// save return address
+    fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
+    fprintf(fp,"    j   %s\n",astroot->symbol->name);// jump to the function label
+    traverse(astroot->child[2]);
+    global_offset = temp;
+    // TO DO the logic of returning from a function 
+
 }
 
 void traverse_ast_stmt_list(AST* astroot)
@@ -879,7 +897,7 @@ bool convertible_types(int type1,int type2){
 }
 
 void check_params(AST* astroot){
-    AST* args = astroot->child[0];
+    AST* args = astroot->child[1];
     Symbol* func = search_symbol(astroot->symbol->name);
     if(func == NULL){
         printf("No function with name %s exists.\n",astroot->symbol->name);
@@ -891,6 +909,10 @@ void check_params(AST* astroot){
             printf("Type mismatch in function %s for parameter %s\n",astroot->symbol->name,params->name);
             exit(0);
         }
+        params->size = get_size(params->type);
+        params->offset = global_offset;
+        global_offset += params->size;
+        args->child[1]->symbol = params;
         // printf("Checking: %d\n",args->child[1]->datatype);
         // printf("Checking : %s\n",params->name);
         params = params->next;

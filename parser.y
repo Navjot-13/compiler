@@ -522,7 +522,9 @@ variable:       ID
                 | ID '(' args ')' 
                 
                 {
-                        $$ = make_node(ast_func_call_stmt,$3,NULL,NULL,NULL);
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_func_call_stmt,push,$3,pop,NULL);
                         char* name = (char*)malloc((strlen($1)+1)*sizeof(char));
                         strcpy(name,$1);
                         $$->symbol = symbol_init(name,-1,NULL,NULL);

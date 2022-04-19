@@ -1,18 +1,11 @@
-begin {
-    int a,b;
+int add(int a,int b,int c,int d){
     a=6;
     b=6;
-    ifloop(((a = 0)) or a > 0){
-        if(b > 0){
-            ifloop(b == 0 and b != a){
-                b--;
-            }
-        }
-        else if(b < 0){
-            b--;
-        }
-        else{
-            a = a - b;
-        }
-    }
+    return c+d;
+}
+
+
+begin {
+    int a,b,c,d;
+    a = add(a,b,c,d);
 }

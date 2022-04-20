@@ -115,10 +115,6 @@ void traverse_ast_func_stmt(AST* astroot)
     astroot->child[2]->symbol = astroot->symbol;
     traverse(astroot->child[2]);
     traverse(astroot->child[3]);
-    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
-    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
-    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
-    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     fprintf(fp,"    jr $ra\n"); // return
     global_offset = temp;
 }
@@ -154,7 +150,9 @@ void traverse_ast_arg_list_stmt(AST* astroot)
     // printf("OFFSET: %d\n",astroot->child[1]->symbol->offset);
     // astroot->child[1]->symbol->offset -= 8;
     push_symbol(astroot->child[1]->symbol);
+    current_symbol_table = current_symbol_table->prev;
     traverse(astroot->child[1]);
+    current_symbol_table = current_symbol_table->next;
     // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
     fprintf(fp,"    addi $sp,$sp, -%d\n",add_to_stack);
     fprintf(fp,"    sw $%d 0($sp)\n",astroot->child[1]->reg);
@@ -174,8 +172,12 @@ void traverse_ast_func_call_stmt(AST* astroot)
     fprintf(fp,"    sw $fp, 4($sp)\n"); // save old fp
     fprintf(fp,"    sw $ra, 0($sp)\n");// save return address
     fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
-    fprintf(fp,"    j   __%s__\n",astroot->symbol->name);// jump to the function label
+    fprintf(fp,"    jal   __%s__\n",astroot->symbol->name);// jump to the function label
     traverse(astroot->child[2]);
+    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
+    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
+    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
+    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     global_offset = temp;
     if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
         astroot->reg = 2;
@@ -665,10 +667,6 @@ void traverse_ast_return_stmt(AST* astroot)
     } else if(astroot->symbol->type == STR_TYPE){
 
     }
-    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
-    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
-    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
-    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     fprintf(fp,"    jr $ra\n"); // return
 
 }

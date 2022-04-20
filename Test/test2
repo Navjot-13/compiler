@@ -1,10 +1,12 @@
-int identity(int a){
-    return a;
+int sum(int a,int b){
+    return a+b;
 }
 
 
 begin {
-    int a;
+    int a,b;
     a = 6;
-    a = identity(a);
+    b = 6;
+    int c;
+    c = sum(a,b); 
 }

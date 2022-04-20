@@ -172,10 +172,13 @@ void traverse_ast_func_call_stmt(AST* astroot)
     fprintf(fp,"    j   %s\n",astroot->symbol->name);// jump to the function label
     traverse(astroot->child[2]);
     global_offset = temp;
-    if(astroot->symbol->type == INT_TYPE || astroot->symbol->type == BOOL_TYPE){
-        astroot->reg = 3;
-    }
-    // TO DO the logic of returning from a function 
+    if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
+        astroot->reg = 2;
+    } else if(astroot->datatype == STR_TYPE){
+
+    } else {
+
+    } 
 
 }
 

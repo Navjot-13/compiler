@@ -9,5 +9,6 @@ begin {
     int a,b;
     a = 6;
     b = 6;
-    a = add(a,b);
+    int c;
+    c = add(a,b);
 }

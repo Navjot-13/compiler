@@ -25,7 +25,7 @@ void typecheck(AST *astroot);
 void binary_op_type_checking(AST *astroot);
 void add_params(AST* astroot);
 void check_params(AST* astroot);
-bool compatible_types(int type1,int type2);
+bool convertible_types(int type1,int type2);
 void generate_code(AST* astroot);
 int get_size(int type);
 void update_counter();
@@ -67,13 +67,17 @@ int main(int argc, char *argv[])
 void traverse_ast_stmts(AST* astroot)
 {
     fprintf(fp,"main:\n");
-    fprintf(fp,"    la $fp, 0($sp)\n");
+    // fprintf(fp,"    la $sp, -8($sp)\n"); // allocate space for old $fp and $ra
+    // fprintf(fp,"    sw $fp, 4($sp)\n"); // save old fp
+    // fprintf(fp,"    sw $ra, 0($sp)\n");// save return address
+    fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
     }
     for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
+
     // fprintf(fp,"__%d__:\n",astroot->next);
 }
 
@@ -97,10 +101,17 @@ void traverse_ast_start_stmt(AST* astroot)
 void traverse_ast_func_stmt(AST* astroot)
 {
     fprintf(fp,"%s:\n",astroot->symbol->name);
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
-    fprintf(fp,"    jr $ra\n");
+    traverse(astroot->child[0]);
+    traverse(astroot->child[1]);
+    // assign the return type of the function
+    astroot->child[2]->symbol = astroot->symbol;
+    traverse(astroot->child[2]);
+    traverse(astroot->child[3]);
+    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
+    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
+    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
+    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
+    fprintf(fp,"    jr $ra\n"); // return
     add_params(astroot);
 }
 
@@ -130,8 +141,9 @@ void traverse_ast_param_stmt(AST* astroot)
 
 void traverse_ast_arg_list_stmt(AST* astroot)
 {
-    int offset = astroot->child[1]->symbol->offset;
-    astroot->child[1]->symbol->offset -= 8;
+    int offset = astroot->child[1]->symbol->offset + 12;
+
+    // astroot->child[1]->symbol->offset -= 8;
     push_symbol(astroot->child[1]->symbol);
     traverse(astroot->child[1]);
     // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
@@ -143,7 +155,7 @@ void traverse_ast_arg_list_stmt(AST* astroot)
 void traverse_ast_func_call_stmt(AST* astroot)
 {
     int temp = global_offset;
-    global_offset = 12;
+    global_offset = 0;
     check_params(astroot);
     // printf("Offset: %d\n",astroot->child[1]->child[1]->symbol->offset);
     traverse(astroot->child[0]);
@@ -155,6 +167,9 @@ void traverse_ast_func_call_stmt(AST* astroot)
     fprintf(fp,"    j   %s\n",astroot->symbol->name);// jump to the function label
     traverse(astroot->child[2]);
     global_offset = temp;
+    if(astroot->symbol->type == INT_TYPE || astroot->symbol->type == BOOL_TYPE){
+        astroot->reg = 3;
+    }
     // TO DO the logic of returning from a function 
 
 }
@@ -162,8 +177,12 @@ void traverse_ast_func_call_stmt(AST* astroot)
 void traverse_ast_stmt_list(AST* astroot)
 {
     astroot->child[0]->next = label++;
+    if(astroot->child[0]->type == ast_return_stmt){
+        astroot->child[0]->symbol = astroot->symbol;
+    }
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
+        astroot->child[1]->symbol = astroot->symbol;
     }
     traverse(astroot->child[0]);
     if(astroot->child[0]->type == ast_cond_stmt || astroot->child[0]->type == ast_loop_stmt){
@@ -603,7 +622,28 @@ void traverse_ast_input_stmt(AST* astroot)
 
 void traverse_ast_return_stmt(AST* astroot)
 {
-    // pass
+    traverse(astroot->child[0]);
+    if(astroot->symbol == NULL){
+        printf("Error: Return statement in begin function not allowed\n");
+        exit(0);
+    }
+    if(!convertible_types(astroot->child[0]->datatype,astroot->symbol->type)){
+        printf("Error: Return type of function %s doesn't match with the return statement type\n",astroot->symbol->name);
+        exit(0);
+    }
+    if(astroot->symbol->type == INT_TYPE || astroot->symbol->type == BOOL_TYPE){
+        fprintf(fp,"    lw $v0 -%d($fp)\n",astroot->child[0]->reg);
+    } else if(astroot->symbol->type == DOUBLE_TYPE){
+
+    } else if(astroot->symbol->type == STR_TYPE){
+
+    }
+    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
+    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
+    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
+    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
+    fprintf(fp,"    jr $ra\n"); // return
+
 }
 
 
@@ -828,13 +868,27 @@ void traverse(AST *astroot)
 }
 
 void typecheck(AST *astroot) {
+    printf("Type : %d\n",astroot->type);
     if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE) {
         astroot->child[1]->val.int_val= (int)astroot->child[1]->val.double_val;
         astroot->datatype = INT_TYPE;
     } else if (astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE) {
-        astroot->child[0]->val.double_val= (double)astroot->child[1]->val.int_val;
+        astroot->child[1]->val.double_val= (double)astroot->child[1]->val.int_val;
         astroot->datatype = DOUBLE_TYPE;
-    } else if(astroot->child[0]->datatype != astroot->child[1]->datatype) {
+    } else if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == BOOL_TYPE) {
+        astroot->child[1]->val.int_val= (int)astroot->child[1]->val.bool_val;
+        astroot->datatype = INT_TYPE;
+    } else if (astroot->child[0]->datatype == BOOL_TYPE && astroot->child[1]->datatype == INT_TYPE) {
+        astroot->child[1]->val.bool_val= (bool)astroot->child[1]->val.int_val;
+        astroot->datatype = BOOL_TYPE;
+    } else if (astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == BOOL_TYPE) {
+        astroot->child[1]->val.double_val= (double)astroot->child[1]->val.bool_val;
+        astroot->datatype = DOUBLE_TYPE;
+    } else if (astroot->child[0]->datatype == BOOL_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE) {
+        astroot->child[1]->val.bool_val= (bool)astroot->child[1]->val.double_val;
+        astroot->datatype = BOOL_TYPE;
+    } 
+    else if(astroot->child[0]->datatype != astroot->child[1]->datatype) {
         printf("Types: %d    %d\n",astroot->child[0]->datatype,astroot->child[1]->datatype);
         printf("\nError: Type mismatch in assignment statement\n");
         exit(0);
@@ -842,21 +896,16 @@ void typecheck(AST *astroot) {
 }
 
 void binary_op_type_checking(AST *astroot){
-    if(astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE){
-        astroot->datatype = DOUBLE_TYPE;
-        astroot->val.double_val = astroot->child[0]->val.double_val + astroot->child[1]->val.double_val;
-    } else if(astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE){
-        astroot->datatype = DOUBLE_TYPE;
-        astroot->val.double_val = astroot->child[0]->val.int_val + astroot->child[1]->val.double_val;
-    } else if(astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE){
-        astroot->datatype = DOUBLE_TYPE;
-        astroot->val.double_val = astroot->child[0]->val.double_val + astroot->child[1]->val.int_val;
-    } else if(astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == INT_TYPE) {
-        astroot->datatype = DOUBLE_TYPE;
-        astroot->val.int_val = astroot->child[0]->val.int_val + astroot->child[1]->val.int_val;
-    } else{
-        printf("Invalid operands for +");
+    if(astroot->child[0]->datatype == STR_TYPE || astroot->child[1]->datatype == STR_TYPE){
+        printf("Invalid operands for +\n");
         exit(0);
+    }
+    if(astroot->child[0]->datatype == DOUBLE_TYPE || astroot->child[1]->datatype == DOUBLE_TYPE){
+        astroot->datatype = DOUBLE_TYPE;
+    } else if(astroot->child[0]->datatype == INT_TYPE || astroot->child[1]->datatype == INT_TYPE){
+        astroot->datatype = INT_TYPE;
+    } else{
+        astroot->datatype = BOOL_TYPE;
     }
 }
 

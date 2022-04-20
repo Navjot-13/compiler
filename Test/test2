@@ -1,11 +1,13 @@
-int add(int a,int b,int c,int d){
+int add(int a,int b){
     a=6;
     b=6;
-    return c+d;
+    return a+b;
 }
 
 
 begin {
-    int a,b,c,d;
-    a = add(a,b,c,d);
+    int a,b;
+    a = 6;
+    b = 6;
+    a = add(a,b);
 }

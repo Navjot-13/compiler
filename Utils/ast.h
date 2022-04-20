@@ -60,6 +60,7 @@
 typedef struct AST{
         int type;
         int datatype;
+        int return_type;
         Symbol *symbol;
         int size;
         int scope_no;// scope number of the current AST node

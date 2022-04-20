@@ -105,7 +105,10 @@ void traverse_ast_start_stmt(AST* astroot)
 
 void traverse_ast_func_stmt(AST* astroot)
 {
-    fprintf(fp,"%s:\n",astroot->symbol->name);
+    fprintf(fp,"__%s__:\n",astroot->symbol->name);
+    int temp = global_offset;
+    global_offset = 4;
+    add_params(astroot);
     traverse(astroot->child[0]);
     traverse(astroot->child[1]);
     // assign the return type of the function
@@ -117,7 +120,7 @@ void traverse_ast_func_stmt(AST* astroot)
     fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
     fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     fprintf(fp,"    jr $ra\n"); // return
-    add_params(astroot);
+    global_offset = temp;
 }
 
 void traverse_func_list_stmt(AST* astroot)
@@ -129,38 +132,40 @@ void traverse_func_list_stmt(AST* astroot)
 
 void traverse_ast_param_list_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
+    int add_to_stack = astroot->child[1]->symbol->offset + 8;
+    // printf("OFFSET: %d\n",astroot->child[1]->symbol->offset);
+    // astroot->child[1]->symbol->offset -= 8;
+    push_symbol(astroot->child[1]->symbol);
+    traverse(astroot->child[1]);
+    // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
+    traverse(astroot->child[0]);
 }
 
 void traverse_ast_param_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
-    astroot->scope_no = current_scope;
     astroot->symbol->size = get_size(astroot->symbol->type);
+    // printf("PARAM NAME: %s   OFFSET: %d\n",astroot->symbol->name,astroot->symbol->offset);
     push_symbol(astroot->symbol);
 }
 
 void traverse_ast_arg_list_stmt(AST* astroot)
 {
-    int offset = astroot->child[1]->symbol->offset + 12;
-
+    int add_to_stack = astroot->child[1]->symbol->offset + 8;
+    // printf("OFFSET: %d\n",astroot->child[1]->symbol->offset);
     // astroot->child[1]->symbol->offset -= 8;
     push_symbol(astroot->child[1]->symbol);
     traverse(astroot->child[1]);
     // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
-    fprintf(fp,"    sw $%d -%d($sp)\n",astroot->child[1]->reg,offset);
-    printf("Offset: %d\n",offset);
+    fprintf(fp,"    addi $sp,$sp, -%d\n",add_to_stack);
+    fprintf(fp,"    sw $%d 0($sp)\n",astroot->child[1]->reg);
+    fprintf(fp,"    addi $sp,$sp, %d\n",add_to_stack);
     traverse(astroot->child[0]);
 }
 
 void traverse_ast_func_call_stmt(AST* astroot)
 {
     int temp = global_offset;
-    global_offset = 0;
+    global_offset = 4;
     check_params(astroot);
     // printf("Offset: %d\n",astroot->child[1]->child[1]->symbol->offset);
     traverse(astroot->child[0]);
@@ -169,7 +174,7 @@ void traverse_ast_func_call_stmt(AST* astroot)
     fprintf(fp,"    sw $fp, 4($sp)\n"); // save old fp
     fprintf(fp,"    sw $ra, 0($sp)\n");// save return address
     fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
-    fprintf(fp,"    j   %s\n",astroot->symbol->name);// jump to the function label
+    fprintf(fp,"    j   __%s__\n",astroot->symbol->name);// jump to the function label
     traverse(astroot->child[2]);
     global_offset = temp;
     if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
@@ -201,7 +206,7 @@ void traverse_ast_stmt_list(AST* astroot)
 
 void traverse_ast_assgn_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
     // printf("Type 1: %d Type 2: %d\n",astroot->child[0]->type,astroot->child[1]->type);
@@ -654,7 +659,7 @@ void traverse_ast_return_stmt(AST* astroot)
         exit(0);
     }
     if(astroot->symbol->type == INT_TYPE || astroot->symbol->type == BOOL_TYPE){
-        fprintf(fp,"    lw $v0 -%d($fp)\n",astroot->child[0]->reg);
+        fprintf(fp,"    add $v0 $0 $%d\n",astroot->child[0]->reg);
     } else if(astroot->symbol->type == DOUBLE_TYPE){
 
     } else if(astroot->symbol->type == STR_TYPE){
@@ -950,6 +955,9 @@ void add_params(AST* astroot){
             cur_param->next->prev = cur_param;
             cur_param = cur_param->next;
         }
+        params->child[1]->symbol->size = get_size(params->child[1]->symbol->type);
+        params->child[1]->symbol->offset = global_offset;
+        global_offset += params->child[1]->symbol->size;
         // printf("Parameters: %s\n",params->child[1]->symbol->name);
         params = params->child[0];
     }

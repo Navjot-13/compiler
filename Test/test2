@@ -1,14 +1,10 @@
-int add(int a,int b){
-    a=6;
-    b=6;
-    return a+b;
+int identity(int a){
+    return a;
 }
 
 
 begin {
-    int a,b;
+    int a;
     a = 6;
-    b = 6;
-    int c;
-    c = add(a,b);
+    a = identity(a);
 }

@@ -3,6 +3,8 @@ begin{
     int y;
     x = 4;
     y = 0;
+    decimal pi;
+    pi = 3.14;
     ifloop(x > 0){
         y++;
         x--;

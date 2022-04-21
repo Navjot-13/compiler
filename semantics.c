@@ -36,6 +36,8 @@ void update_register(int index);
 void update_fregister(int index);
 int get_register();
 int get_fregister();
+void push_registers_on_stack();
+void pop_registers_from_stack();
 
 int main(int argc, char *argv[])
 {
@@ -98,7 +100,7 @@ void traverse_ast_pop_scope(AST* astroot)
 
 void traverse_ast_start_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
 }
@@ -128,7 +130,6 @@ void traverse_func_list_stmt(AST* astroot)
 
 void traverse_ast_param_list_stmt(AST* astroot)
 {
-    int add_to_stack = astroot->child[1]->symbol->offset + 8;
     // printf("OFFSET: %d\n",astroot->child[1]->symbol->offset);
     // astroot->child[1]->symbol->offset -= 8;
     push_symbol(astroot->child[1]->symbol);
@@ -172,7 +173,15 @@ void traverse_ast_func_call_stmt(AST* astroot)
     fprintf(fp,"    sw $fp, 4($sp)\n"); // save old fp
     fprintf(fp,"    sw $ra, 0($sp)\n");// save return address
     fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
+    if(global_offset > 4){
+        fprintf(fp,"    addi $sp, $sp, -%d\n",global_offset - 4);// shift stack pointer upto parameters size
+    }
+    push_registers_on_stack();
     fprintf(fp,"    jal   __%s__\n",astroot->symbol->name);// jump to the function label
+    pop_registers_from_stack();
+    if(global_offset > 4){
+        fprintf(fp,"    addi $sp, $sp, %d\n",global_offset - 4);// shift stack pointer upto parameters size
+    }
     traverse(astroot->child[2]);
     fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
     fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
@@ -1063,4 +1072,18 @@ void update_fregister(int index){
 void update_register(int index) {
     lru_counter[index-8] = global_counter;
     update_counter();
+}
+
+void push_registers_on_stack(){
+    fprintf(fp,"    addi $sp, $sp, -72\n");
+    for(int i = 8; i <= 25;++i){
+        fprintf(fp,"    sw $%d, %d($sp)\n",i,(i-8)*4);
+    }
+}
+
+void pop_registers_from_stack(){
+    for(int i = 8; i <= 25;++i){
+        fprintf(fp,"    lw $%d, %d($sp)\n",i,(i-8)*4);
+    }
+    fprintf(fp,"    addi $sp, $sp, 72\n");
 }

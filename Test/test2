@@ -8,7 +8,7 @@ int factorial(int a){
 
 begin {
     int a;
-    a = 3;
+    a = 5;
     int c;
     c = factorial(a);
 }

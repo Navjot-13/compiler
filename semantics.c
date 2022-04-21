@@ -192,9 +192,7 @@ void traverse_ast_func_call_stmt(AST* astroot)
 void traverse_ast_stmt_list(AST* astroot)
 {
     astroot->child[0]->next = label++;
-    if(astroot->child[0]->type == ast_return_stmt){
-        astroot->child[0]->symbol = astroot->symbol;
-    }
+    astroot->child[0]->symbol = astroot->symbol;
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
         astroot->child[1]->symbol = astroot->symbol;
@@ -234,9 +232,10 @@ void traverse_ast_cond_stmt(AST* astroot)
             astroot->child[0]->child[2]->next = astroot->child[1]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
             traverse(astroot->child[0]->child[1]);
-            fprintf(fp,"   beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
+            fprintf(fp,"    beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
             // fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             // fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
+            astroot->child[0]->child[2]->symbol = astroot->symbol;
             traverse(astroot->child[0]->child[2]);
             fprintf(fp,"    j __%d__\n",astroot->next);
             fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->fal);
@@ -247,9 +246,10 @@ void traverse_ast_cond_stmt(AST* astroot)
             astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
             traverse(astroot->child[0]->child[1]);
-            fprintf(fp,"   beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
+            fprintf(fp,"    beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
             // fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             // fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
+            astroot->child[0]->child[2]->symbol = astroot->symbol;
             traverse(astroot->child[0]->child[2]);
             traverse(astroot->child[0]->child[3]);
         }

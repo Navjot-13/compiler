@@ -26,7 +26,7 @@ void push_symbol_table() {
         current_symbol_table->next = NULL;
         current_symbol_table->symbol_head = NULL;
     }
-    current_symbol_table->scope = current_scope;
+    current_symbol_table->size = 0;
 }
 
 Symbol* search_symbol(char* id) {

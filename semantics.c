@@ -36,6 +36,8 @@ void update_register(int index);
 void update_fregister(int index);
 int get_register();
 int get_fregister();
+void push_registers_on_stack();
+void pop_registers_from_stack();
 
 int main(int argc, char *argv[])
 {
@@ -98,26 +100,25 @@ void traverse_ast_pop_scope(AST* astroot)
 
 void traverse_ast_start_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
 }
 
 void traverse_ast_func_stmt(AST* astroot)
 {
-    fprintf(fp,"%s:\n",astroot->symbol->name);
+    fprintf(fp,"__%s__:\n",astroot->symbol->name);
+    int temp = global_offset;
+    global_offset = 4;
+    add_params(astroot);
     traverse(astroot->child[0]);
     traverse(astroot->child[1]);
     // assign the return type of the function
     astroot->child[2]->symbol = astroot->symbol;
     traverse(astroot->child[2]);
     traverse(astroot->child[3]);
-    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
-    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
-    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
-    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     fprintf(fp,"    jr $ra\n"); // return
-    add_params(astroot);
+    global_offset = temp;
 }
 
 void traverse_func_list_stmt(AST* astroot)
@@ -129,38 +130,41 @@ void traverse_func_list_stmt(AST* astroot)
 
 void traverse_ast_param_list_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
+    // printf("OFFSET: %d\n",astroot->child[1]->symbol->offset);
+    // astroot->child[1]->symbol->offset -= 8;
+    push_symbol(astroot->child[1]->symbol);
+    traverse(astroot->child[1]);
+    // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
+    traverse(astroot->child[0]);
 }
 
 void traverse_ast_param_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
-    astroot->scope_no = current_scope;
     astroot->symbol->size = get_size(astroot->symbol->type);
+    // printf("PARAM NAME: %s   OFFSET: %d\n",astroot->symbol->name,astroot->symbol->offset);
     push_symbol(astroot->symbol);
 }
 
 void traverse_ast_arg_list_stmt(AST* astroot)
 {
-    int offset = astroot->child[1]->symbol->offset + 12;
-
+    int add_to_stack = astroot->child[1]->symbol->offset + 8;
+    // printf("OFFSET: %d\n",astroot->child[1]->symbol->offset);
     // astroot->child[1]->symbol->offset -= 8;
     push_symbol(astroot->child[1]->symbol);
+    current_symbol_table = current_symbol_table->prev;
     traverse(astroot->child[1]);
+    current_symbol_table = current_symbol_table->next;
     // fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->child[1]->symbol->type));// allocate stack frame
-    fprintf(fp,"    sw $%d -%d($sp)\n",astroot->child[1]->reg,offset);
-    printf("Offset: %d\n",offset);
+    fprintf(fp,"    addi $sp,$sp, -%d\n",add_to_stack);
+    fprintf(fp,"    sw $%d 0($sp)\n",astroot->child[1]->reg);
+    fprintf(fp,"    addi $sp,$sp, %d\n",add_to_stack);
     traverse(astroot->child[0]);
 }
 
 void traverse_ast_func_call_stmt(AST* astroot)
 {
     int temp = global_offset;
-    global_offset = 0;
+    global_offset = 4;
     check_params(astroot);
     // printf("Offset: %d\n",astroot->child[1]->child[1]->symbol->offset);
     traverse(astroot->child[0]);
@@ -169,8 +173,20 @@ void traverse_ast_func_call_stmt(AST* astroot)
     fprintf(fp,"    sw $fp, 4($sp)\n"); // save old fp
     fprintf(fp,"    sw $ra, 0($sp)\n");// save return address
     fprintf(fp,"    la $fp, 0($sp)\n");// set up frame pointer
-    fprintf(fp,"    j   %s\n",astroot->symbol->name);// jump to the function label
+    if(global_offset > 4){
+        fprintf(fp,"    addi $sp, $sp, -%d\n",global_offset - 4);// shift stack pointer upto parameters size
+    }
+    push_registers_on_stack();
+    fprintf(fp,"    jal   __%s__\n",astroot->symbol->name);// jump to the function label
+    pop_registers_from_stack();
+    if(global_offset > 4){
+        fprintf(fp,"    addi $sp, $sp, %d\n",global_offset - 4);// shift stack pointer upto parameters size
+    }
     traverse(astroot->child[2]);
+    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
+    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
+    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
+    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     global_offset = temp;
     if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
         astroot->reg = 2;
@@ -185,9 +201,7 @@ void traverse_ast_func_call_stmt(AST* astroot)
 void traverse_ast_stmt_list(AST* astroot)
 {
     astroot->child[0]->next = label++;
-    if(astroot->child[0]->type == ast_return_stmt){
-        astroot->child[0]->symbol = astroot->symbol;
-    }
+    astroot->child[0]->symbol = astroot->symbol;
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
         astroot->child[1]->symbol = astroot->symbol;
@@ -201,7 +215,7 @@ void traverse_ast_stmt_list(AST* astroot)
 
 void traverse_ast_assgn_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
     // printf("Type 1: %d Type 2: %d\n",astroot->child[0]->type,astroot->child[1]->type);
@@ -227,9 +241,10 @@ void traverse_ast_cond_stmt(AST* astroot)
             astroot->child[0]->child[2]->next = astroot->child[1]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
             traverse(astroot->child[0]->child[1]);
-            fprintf(fp,"   beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
+            fprintf(fp,"    beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
             // fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             // fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
+            astroot->child[0]->child[2]->symbol = astroot->symbol;
             traverse(astroot->child[0]->child[2]);
             fprintf(fp,"    j __%d__\n",astroot->next);
             fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->fal);
@@ -240,9 +255,10 @@ void traverse_ast_cond_stmt(AST* astroot)
             astroot->child[0]->child[0]->fal = astroot->child[0]->child[2]->next = astroot->next;
             traverse(astroot->child[0]->child[0]);
             traverse(astroot->child[0]->child[1]);
-            fprintf(fp,"   beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
+            fprintf(fp,"    beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
             // fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             // fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
+            astroot->child[0]->child[2]->symbol = astroot->symbol;
             traverse(astroot->child[0]->child[2]);
             traverse(astroot->child[0]->child[3]);
         }
@@ -661,16 +677,12 @@ void traverse_ast_return_stmt(AST* astroot)
         exit(0);
     }
     if(astroot->symbol->type == INT_TYPE || astroot->symbol->type == BOOL_TYPE){
-        fprintf(fp,"    lw $v0 -%d($fp)\n",astroot->child[0]->reg);
+        fprintf(fp,"    add $v0 $0 $%d\n",astroot->child[0]->reg);
     } else if(astroot->symbol->type == DOUBLE_TYPE){
 
     } else if(astroot->symbol->type == STR_TYPE){
 
     }
-    fprintf(fp,"    la $sp, 0($fp)\n");// deallocate labels
-    fprintf(fp,"    lw $ra, 0($sp)\n");// restore return address
-    fprintf(fp,"    lw $fp, 4($sp)\n");// restore frame pointer
-    fprintf(fp,"    la $sp, 8($sp)\n");// restore stack pointer
     fprintf(fp,"    jr $ra\n"); // return
 
 }
@@ -957,6 +969,9 @@ void add_params(AST* astroot){
             cur_param->next->prev = cur_param;
             cur_param = cur_param->next;
         }
+        params->child[1]->symbol->size = get_size(params->child[1]->symbol->type);
+        params->child[1]->symbol->offset = global_offset;
+        global_offset += params->child[1]->symbol->size;
         // printf("Parameters: %s\n",params->child[1]->symbol->name);
         params = params->child[0];
     }
@@ -1064,4 +1079,18 @@ void update_fregister(int index){
 void update_register(int index) {
     lru_counter[index-8] = global_counter;
     update_counter();
+}
+
+void push_registers_on_stack(){
+    fprintf(fp,"    addi $sp, $sp, -72\n");
+    for(int i = 8; i <= 25;++i){
+        fprintf(fp,"    sw $%d, %d($sp)\n",i,(i-8)*4);
+    }
+}
+
+void pop_registers_from_stack(){
+    for(int i = 8; i <= 25;++i){
+        fprintf(fp,"    lw $%d, %d($sp)\n",i,(i-8)*4);
+    }
+    fprintf(fp,"    addi $sp, $sp, 72\n");
 }

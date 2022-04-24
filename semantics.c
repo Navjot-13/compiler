@@ -616,9 +616,16 @@ void traverse_ast_const_val(AST* astroot)
 
 void traverse_ast_print_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
+    traverse(astroot->child[0]);
+
+    if (astroot->child[0]->datatype == INT_TYPE){
+        int reg1 = astroot->child[0]->reg;
+        update_register(reg1);
+        fprintf(fp, "    li $v0, 1\n");
+        fprintf(fp, "    move $a0, $%d\n", reg1);
+        fprintf(fp, "    syscall\n");
     }
+    
 }
 
 void traverse_ast_input_stmt(AST* astroot)

@@ -571,12 +571,24 @@ void traverse_ast_div_stmt(AST* astroot)
     binary_op_type_checking(astroot);
 
     // Generate Code (Considering only integers for now)
-    int reg0 = astroot->child[0]->reg;
-    int reg1 = astroot->child[1]->reg;
-    astroot->reg = reg0;
-    fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
-    update_register(reg0);
-    update_register(reg1);
+    if(astroot->datatype == INT_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        int reg1 = astroot->child[1]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    div $%d, $%d, $%d\n", astroot->reg, reg0, reg1);
+        update_register(reg0);
+        update_register(reg1);
+    }
+
+    // for float
+    // if(astroot->datatype == DOUBLE_TYPE){
+    //     int freg0 = astroot->child[0]->freg;
+    //     int freg1 = astroot->child[1]->freg;
+    //     astroot->freg = freg0;
+    //     fprintf(fp, "    div.s $f%d, $f%d, $f%d\n", astroot->freg, freg0, freg1);
+    //     update_fregister(freg0);
+    //     update_fregister(freg1);
+    // }
 }
 
 void traverse_ast_unary_not(AST* astroot)
@@ -615,15 +627,21 @@ void traverse_ast_const_val(AST* astroot)
         astroot->reg = reg1;
         fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.int_val);
     }
+
+    //for float
     if(astroot->datatype == DOUBLE_TYPE){
         int freg1 = get_fregister();
-        printf("in data type");
         astroot->freg = freg1;
         fprintf(fp, "   l.s $f%d, %lf\n", freg1, astroot->val.double_val);
     }
-    if(astroot->datatype == BOOL_TYPE){
 
+    //for bool
+    if(astroot->datatype == BOOL_TYPE){
+        int reg1 = get_register();
+        astroot->reg = reg1;
+        fprintf(fp, "    li $%d, %d\n", reg1, astroot->val.bool_val); 
     }
+
     if(astroot->datatype == STR_TYPE){
           
     }
@@ -656,6 +674,29 @@ void traverse_ast_input_stmt(AST* astroot)
         fprintf(fp, "    move $%d, $v0\n", reg1);
         update_register(reg1);
     }
+
+    // For float
+    if (symbol->type == DOUBLE_TYPE) {
+        fprintf(fp, "    li $v0, 6\n");
+        fprintf(fp, "    syscall\n");
+
+        int freg1 = get_fregister();
+        astroot->freg = freg1;
+        fprintf(fp, "    mov.s $f%d, $f0\n", freg1);
+        update_fregister(freg1);
+    }
+
+    //for bool
+    if (symbol->type == BOOL_TYPE) {
+        
+    }
+
+    //for string
+    if(symbol->type == STR_TYPE){
+
+    }
+
+
 }
 
 void traverse_ast_return_stmt(AST* astroot)

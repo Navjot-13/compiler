@@ -1,5 +1,14 @@
+int factorial(int a){
+    if(a == 1){
+        return 1;
+    }
+    return a * factorial(a-1);
+}
+
+
 begin {
-    int a,b,c,d;
-    a=5;
-    b=3.2523;
+    int a;
+    a = 5;
+    int c;
+    c = factorial(a);
 }

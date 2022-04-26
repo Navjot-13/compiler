@@ -34,7 +34,7 @@ int yyerror(char *);
 %type<ast> statements stmt_list stmt cond_stmt assign_stmt array_decl arr_variable program X func_list 
 function params param_list param_type cond_stmt2 args arg_list expressions expr cond_or_stmt cond_and_stmt 
 eql_stmt comp_stmt arithmetic_stmt1 arithmetic_stmt2 unary_op_stmt constant loop_stmt variable L print_stmt 
-input_stmt printable
+input_stmt
 %%
 
 program:        func_list  BGN statements 
@@ -42,7 +42,7 @@ program:        func_list  BGN statements
                         printf("No problem\n");
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        astroot = make_node(ast_start_stmt,$1,$3,NULL,NULL);
+                        astroot = make_node(ast_start_stmt,push,$1,$3,pop);
                 }
                 ; 
 
@@ -212,21 +212,16 @@ stmt:           assign_stmt
                 }
                 ;
 
-print_stmt:     PRINT '(' printable ')' SCOL
+print_stmt:     PRINT '(' expr ')' SCOL
                 {
                         $$ = make_node(ast_print_stmt,$3,NULL,NULL,NULL);
                 }
                 ;
 
-printable:      expr
-                {      
-                        $$ = $1;
-                }
-
 
 input_stmt:     variable ASSIGN INPUT '(' ')' SCOL
                 {
-                       $$ = $1;
+                       $$ = make_node(ast_input_stmt,$1,NULL,NULL,NULL);
                 }
                 ;
 
@@ -421,13 +416,13 @@ comp_stmt:      comp_stmt comp_op arithmetic_stmt1
 
 comp_op:        '>'     
                 {
-                        $$ = ast_lt_stmt;
+                        $$ = ast_gt_stmt;
                 }
                     
                 | '<'  
                 
                 {
-                        $$ = ast_gt_stmt;
+                        $$ = ast_lt_stmt;
                 }
                 
                 | GEQ  
@@ -508,6 +503,12 @@ unary_op_stmt:  NOT unary_op_stmt
                 {    
                         $$ = $1;
                 }
+                
+                | '(' expr ')'
+                
+                {
+                        $$ = $2;
+                }
                 ;
 
 variable:       ID 
@@ -521,7 +522,9 @@ variable:       ID
                 | ID '(' args ')' 
                 
                 {
-                        $$ = make_node(ast_func_call_stmt,$3,NULL,NULL,NULL);
+                        AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
+                        AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_func_call_stmt,push,$3,pop,NULL);
                         char* name = (char*)malloc((strlen($1)+1)*sizeof(char));
                         strcpy(name,$1);
                         $$->symbol = symbol_init(name,-1,NULL,NULL);
@@ -586,11 +589,11 @@ cond_stmt2:     ELSE '{' stmt_list '}'
 
 
 
-loop_stmt:      LP '(' expr ')' statements 
+loop_stmt:      LP '(' expr ')' '{' stmt_list '}'
                 {
                         AST *push = make_node(ast_push_scope,NULL,NULL,NULL,NULL);
                         AST *pop = make_node(ast_pop_scope,NULL,NULL,NULL,NULL);
-                        $$ = make_node(ast_loop_stmt,$3,$5,NULL,NULL);
+                        $$ = make_node(ast_loop_stmt,$3,$6,NULL,NULL);
                 }
                 ;
 

@@ -60,6 +60,7 @@
 typedef struct AST{
         int type;
         int datatype;
+        int return_type;
         Symbol *symbol;
         int size;
         int scope_no;// scope number of the current AST node
@@ -69,6 +70,11 @@ typedef struct AST{
                 char str_val[300];
                 bool bool_val;
         } val;
+        int reg;// int register number
+        int freg;// float register number
+        int next;// label for next statement
+        int tru;// label for representing true
+        int fal;// label for representing false
         struct AST *child[4];
 
 } AST;

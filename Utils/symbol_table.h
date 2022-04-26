@@ -18,6 +18,7 @@ typedef struct Symbol {
     int is_function;
     int is_array;
     int size;
+    int offset; // offset from fp
     struct Symbol* param_list;// formal parameters for when the symbol is a function
     struct Symbol* prev;
     struct Symbol* next;
@@ -35,20 +36,14 @@ typedef struct SymbolTable {
 extern int unused_scope; // the scope number available for usage
 extern int current_scope;// the current scope number
 extern SymbolTable* current_symbol_table;  // Symbol table for current scope
-extern SymbolTable* persistent_symbol_table; // Persistent symbol table for target code generation
 
 Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next);
 
 void push_symbol(Symbol* symbol);
 
-void push_persistent_symbol(Symbol* symbol);
-
-void adjust_persistent_symbol_table();
-
 Symbol* search_symbol(char* id);
 
 void push_symbol_table();
-void push_persistent_symbol_table();
 
 void pop_symbol_table();
 #endif

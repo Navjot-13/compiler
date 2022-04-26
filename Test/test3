@@ -1,12 +1,7 @@
 begin{
     int x;
     int y;
-    x = 4;
-    y = 0;
-    decimal pi;
-    pi = input();
-    ifloop(x > 0){
-        y++;
-        x--;
-    }
+    int z;
+    x = input();
+    x="abc";
 }

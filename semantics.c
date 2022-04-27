@@ -737,6 +737,8 @@ void traverse_ast_input_stmt(AST* astroot)
         exit(0);
     }
 
+    traverse(astroot->child[0]);
+
     // For integer
     if (symbol->type == INT_TYPE) {
         fprintf(fp, "    li $v0, 5\n");
@@ -745,6 +747,7 @@ void traverse_ast_input_stmt(AST* astroot)
         int reg1 = get_register();
         astroot->reg = reg1;
         fprintf(fp, "    move $%d, $v0\n", reg1);
+        fprintf(fp, "    sw $%d, -%d($fp)\n", reg1, astroot->child[0]->symbol->offset);
         update_register(reg1);
     }
 

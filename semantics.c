@@ -244,13 +244,17 @@ void traverse_ast_assgn_stmt(AST* astroot)
         int reg3 = get_register();
         int reg4 = get_register();
 
+        update_register(reg1);
+        update_register(reg2);
+        update_register(reg3);
+        update_register(reg4);
+
     //     __loop__:
     // lb $t3, 0($t1);
     // sb $t3, 0($t2);
     // addi $t1, $t1, 1;
     // addi $t2, $t2, 1;
     // bne $t3, $zero, __loop__;
-
 
         fprintf(fp, "    la $%d, str_buffer\n", reg1);
         fprintf(fp, "    li $%d, %d\n", reg3, astroot->child[0]->symbol->offset);
@@ -737,7 +741,12 @@ void traverse_ast_const_val(AST* astroot)
         int reg1 = get_register();
         // astroot->reg = reg1;
         int reg2 = get_register();
+
+        update_register(reg1);
+        update_register(reg2);
+
         int str_len = strlen(astroot->val.str_val);
+
         fprintf(fp, "    la $%d, str_buffer\n", reg1);
         astroot->val.str_val[str_len - 1] = '\0'; 
         for(int i = 1; i < str_len; i++){
@@ -840,12 +849,10 @@ void traverse_ast_input_stmt(AST* astroot)
         int reg3 = get_register();
         int reg4 = get_register();
 
-    //     __loop__:
-    // lb $t3, 0($t1);
-    // sb $t3, 0($t2);
-    // addi $t1, $t1, 1;
-    // addi $t2, $t2, 1;
-    // bne $t3, $zero, __loop__;
+        update_register(reg1);
+        update_register(reg2);
+        update_register(reg3);
+        update_register(reg4);
 
 
         fprintf(fp, "    la $%d, str_buffer\n", reg1);

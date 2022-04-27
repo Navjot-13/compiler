@@ -22,6 +22,7 @@ int lru_fcounter[18];
 int global_fcounter = 1;
 int global_offset = 0;
 int label = 0;
+int str_label = 0;  // label for pushloop
 void assign_type (AST *astroot);
 void traverse(AST *astroot);
 void typecheck(AST *astroot);
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
     
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
+    fprintf(fp,"        str_buffer: .space 300\n");
     fprintf(fp,"    .text\n");
     fprintf(fp,"    .globl main\n");
     astroot->next = label++;
@@ -235,6 +237,36 @@ void traverse_ast_assgn_stmt(AST* astroot)
         fprintf(fp, "    s.s $f%d, -%d($fp)\n", astroot->child[1]->freg, astroot->child[0]->symbol->offset);
         astroot->freg = astroot->child[1]->freg;
     }
+
+    if(astroot->datatype == STR_TYPE){
+        int reg1 = get_register();
+        int reg2 = get_register();
+        int reg3 = get_register();
+        int reg4 = get_register();
+
+    //     __loop__:
+    // lb $t3, 0($t1);
+    // sb $t3, 0($t2);
+    // addi $t1, $t1, 1;
+    // addi $t2, $t2, 1;
+    // bne $t3, $zero, __loop__;
+
+
+        fprintf(fp, "    la $%d, str_buffer\n", reg1);
+        fprintf(fp, "    li $%d, %d\n", reg3, astroot->child[0]->symbol->offset);
+        fprintf(fp, "       sub $%d, $fp, $%d\n", reg2, reg3);
+        fprintf(fp,"     __pushloop%d__:", str_label); 
+        // fprintf(fp, "       lb $%d, 0($%d)\n", reg2, reg1);
+        fprintf(fp, "       lb $%d, 0($%d)\n", reg4, reg1);  
+        fprintf(fp, "       sb $%d, ($%d)\n", reg4, reg2);
+        fprintf(fp, "       addi $%d, $%d, 1\n", reg1, reg1);
+        fprintf(fp, "       addi $%d, $%d, 1\n", reg2, reg2);
+        fprintf(fp, "       bne $%d, $zero, __pushloop%d__\n", reg4, str_label);
+
+        str_label++;
+        
+        // astroot->reg
+    }
 }
         
 void traverse_ast_cond_stmt(AST* astroot)
@@ -357,8 +389,9 @@ void traverse_ast_variable_stmt(AST* astroot)
         exit(0);
     }
     astroot->symbol->size = get_size(astroot->symbol->type);
-    astroot->symbol->offset = global_offset;
     global_offset += astroot->symbol->size;
+    astroot->symbol->offset = global_offset;
+    
     push_symbol(astroot->symbol);
     // Generate Code
     fprintf(fp,"    la $sp, -%d($sp)\n",get_size(astroot->symbol->type));// allocate stack frame
@@ -395,17 +428,24 @@ void traverse_ast_var_expr(AST* astroot)
     astroot->datatype = symbol->type;
 
     // Generate code
-    if(astroot->datatype == INT_TYPE){
-        int reg = get_register();
-        astroot->reg = reg;
-        fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
-    }
 
     if(astroot->datatype == DOUBLE_TYPE){
         int freg = get_fregister();
         astroot->freg = freg;
         fprintf(fp, "    l.s $f%d, -%d($fp)\n", freg, astroot->symbol->offset); 
     }
+    if(astroot->datatype == STR_TYPE){
+        int reg = get_register();
+        astroot->reg = reg;
+        fprintf(fp, "    addi $%d, $fp, 0\n", reg);
+        fprintf(fp, "    addi $%d, $%d, -%d\n", reg, reg, astroot->symbol->offset);
+    }
+    else{
+        int reg = get_register();
+        astroot->reg = reg;
+        fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
+    }
+
 }
 
 void traverse_ast_or_stmt(AST* astroot)
@@ -603,7 +643,7 @@ void traverse_ast_mul_stmt(AST* astroot)
         update_register(reg1);
     }
 
-    // multiplying floats
+    // floats
     if(astroot->datatype == DOUBLE_TYPE){
         int freg0 = astroot->child[0]->freg;
         int freg1 = astroot->child[1]->freg;
@@ -694,7 +734,22 @@ void traverse_ast_const_val(AST* astroot)
     }
 
     if(astroot->datatype == STR_TYPE){
-          
+
+        int reg1 = get_register();
+        // astroot->reg = reg1;
+        int reg2 = get_register();
+        int str_len = strlen(astroot->val.str_val);
+        fprintf(fp, "    la $%d, str_buffer\n", reg1);
+        astroot->val.str_val[str_len - 1] = '\0'; 
+        for(int i = 1; i < str_len; i++){
+            // if(i == str_len - 1){
+            //     astroot->val.str_val[i] = '\0';
+            // }
+            fprintf(fp, "    li $%d, '%c'\n", reg2, astroot->val.str_val[i]);
+            fprintf(fp, "    sb $%d, 0($%d)\n", reg2, reg1);
+            fprintf(fp, "    addi $%d, $%d, 1\n", reg1, reg1);
+        }
+        
     }
     
 }
@@ -703,11 +758,15 @@ void traverse_ast_print_stmt(AST* astroot)
 {
     traverse(astroot->child[0]);
 
-    if (astroot->child[0]->datatype == INT_TYPE){
+    if (astroot->child[0]->datatype == INT_TYPE || astroot->child[0]->datatype == BOOL_TYPE){
         int reg1 = astroot->child[0]->reg;
         update_register(reg1);
         fprintf(fp, "    li $v0, 1\n");
         fprintf(fp, "    move $a0, $%d\n", reg1);
+        fprintf(fp, "    syscall\n");
+        // print new line
+        fprintf(fp, "    li $v0, 11\n");
+        fprintf(fp, "    li $a0, 10\n");
         fprintf(fp, "    syscall\n");
     }
     
@@ -717,14 +776,22 @@ void traverse_ast_print_stmt(AST* astroot)
         fprintf(fp, "    li $v0, 2\n");
         fprintf(fp, "    mov.s $f12, $f%d\n", freg1);
         fprintf(fp, "    syscall\n");
-    }
-
-    if(astroot->child[0]->datatype == BOOL_TYPE){
-
+        // print new line
+        fprintf(fp, "    li $v0, 11\n");
+        fprintf(fp, "    li $a0, 10\n");
+        fprintf(fp, "    syscall\n");
     }
 
     if(astroot->child[0]->datatype == STR_TYPE){
-
+        int reg1 = astroot->child[0]->reg;
+        update_register(reg1);
+        fprintf(fp, "    li $v0, 4\n");
+        fprintf(fp, "    move $a0, $%d\n", reg1);
+        fprintf(fp, "    syscall\n");
+        // print new line
+        fprintf(fp, "    li $v0, 11\n");
+        fprintf(fp, "    li $a0, 10\n");
+        fprintf(fp, "    syscall\n");
     }
 }
 
@@ -749,7 +816,7 @@ void traverse_ast_input_stmt(AST* astroot)
     }
 
     // For float
-    if (symbol->type == DOUBLE_TYPE) {
+    if (symbol->type == DOUBLE_TYPE || symbol->type == BOOL_TYPE) {
         fprintf(fp, "    li $v0, 6\n");
         fprintf(fp, "    syscall\n");
 
@@ -759,14 +826,17 @@ void traverse_ast_input_stmt(AST* astroot)
         update_fregister(freg1);
     }
 
-    //for bool
-    if (symbol->type == BOOL_TYPE) {
-        
-    }
-
     //for string
     if(symbol->type == STR_TYPE){
+        fprintf(fp, "    li $v0, 8\n");
+        fprintf(fp, "    la $a0, 0($sp)\n");
+        fprintf(fp, "    li $a1, 300\n");
+        fprintf(fp, "    syscall\n");
 
+        int reg1 = get_register();
+        astroot->reg = reg1;
+        fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->symbol->offset);
+        update_register(reg1);
     }
 
 

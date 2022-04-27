@@ -1,7 +1,11 @@
 begin{
-    int x;
-    int y;
-    int z;
+    int a;
+    int b;
+    int c;
+    string s;
+    s = input();
+    string x;
     x = input();
-    x="abc";
+    print(s);
+    print(x);
 }

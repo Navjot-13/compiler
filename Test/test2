@@ -8,7 +8,8 @@ int factorial(int a){
 
 begin {
     int a;
-    a = 5;
+    a = input();
     int c;
     c = factorial(a);
+    print(c);
 }

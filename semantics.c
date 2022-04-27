@@ -256,7 +256,6 @@ void traverse_ast_assgn_stmt(AST* astroot)
         fprintf(fp, "    li $%d, %d\n", reg3, astroot->child[0]->symbol->offset);
         fprintf(fp, "       sub $%d, $fp, $%d\n", reg2, reg3);
         fprintf(fp,"     __pushloop%d__:", str_label); 
-        // fprintf(fp, "       lb $%d, 0($%d)\n", reg2, reg1);
         fprintf(fp, "       lb $%d, 0($%d)\n", reg4, reg1);  
         fprintf(fp, "       sb $%d, ($%d)\n", reg4, reg2);
         fprintf(fp, "       addi $%d, $%d, 1\n", reg1, reg1);
@@ -832,14 +831,34 @@ void traverse_ast_input_stmt(AST* astroot)
     //for string
     if(symbol->type == STR_TYPE){
         fprintf(fp, "    li $v0, 8\n");
-        fprintf(fp, "    la $a0, 0($sp)\n");
+        fprintf(fp, "    la $a0, str_buffer\n");
         fprintf(fp, "    li $a1, 300\n");
         fprintf(fp, "    syscall\n");
 
         int reg1 = get_register();
-        astroot->reg = reg1;
-        fprintf(fp, "    lw $%d, -%d($fp)\n", reg1, astroot->symbol->offset);
-        update_register(reg1);
+        int reg2 = get_register();
+        int reg3 = get_register();
+        int reg4 = get_register();
+
+    //     __loop__:
+    // lb $t3, 0($t1);
+    // sb $t3, 0($t2);
+    // addi $t1, $t1, 1;
+    // addi $t2, $t2, 1;
+    // bne $t3, $zero, __loop__;
+
+
+        fprintf(fp, "    la $%d, str_buffer\n", reg1);
+        fprintf(fp, "    li $%d, %d\n", reg3, astroot->child[0]->symbol->offset);
+        fprintf(fp, "       sub $%d, $fp, $%d\n", reg2, reg3);
+        fprintf(fp,"     __pushloop%d__:", str_label); 
+        fprintf(fp, "       lb $%d, 0($%d)\n", reg4, reg1);  
+        fprintf(fp, "       sb $%d, ($%d)\n", reg4, reg2);
+        fprintf(fp, "       addi $%d, $%d, 1\n", reg1, reg1);
+        fprintf(fp, "       addi $%d, $%d, 1\n", reg2, reg2);
+        fprintf(fp, "       bne $%d, $zero, __pushloop%d__\n", reg4, str_label);
+
+        str_label++;
     }
 
 

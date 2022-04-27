@@ -3,9 +3,9 @@ begin{
     int b;
     int c;
     string s;
-    s="hello world!";
+    s = input();
     string x;
-    x = "goodbye!";
+    x = input();
     print(s);
     print(x);
 }

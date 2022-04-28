@@ -219,19 +219,44 @@ void traverse_ast_assgn_stmt(AST* astroot)
     astroot->datatype = astroot->child[0]->datatype;  
     typecheck(astroot);
     // Generate Code (Considering only integers for now)
-    if(astroot->datatype == INT_TYPE){
+
+    printf("asdfasdfasdfas %d\n",astroot->child[0]->symbol->is_array);
+
+    if(astroot->child[0]->symbol->is_array == 1){
+        if(astroot->child[0]->datatype == INT_TYPE){
+            // int reg1 = get_reg();
+            // int reg2 = get_reg();
+            // fprintf(fp, "    li $%d, %d\n", reg1, local_offset);
+            // fprintf(fp, "    sub $%d, $fp, $%d\n", reg2, reg1);
+            // fprintf(fp, "    sw $%d, 0($%d)\n")
+            // astroot->reg = reg;
+
+            int reg2 = astroot->child[0]->child[1]->reg;
+            int reg1 = get_register();
+            int reg3 = get_register();
+            
+            fprintf(fp, "    sub $%d, $fp, %d\n", reg1, astroot->child[0]->symbol->offset);
+            fprintf(fp, "    mul $%d, $%d, 4\n", reg3, reg2);
+            fprintf(fp, "    add $%d, $%d, $%d\n", reg1, reg1, reg3);
+            fprintf(fp, "    sw $%d, 0($%d)\n", astroot->child[1]->reg, reg1);
+
+            astroot->reg = astroot->child[1]->reg;
+        }
+    }
+
+    else if(astroot->datatype == INT_TYPE){
         printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
         fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
         astroot->reg = astroot->child[1]->reg;
     }
 
-    if(astroot->datatype == DOUBLE_TYPE){
+    else if(astroot->datatype == DOUBLE_TYPE){
         // printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
         fprintf(fp, "    s.s $f%d, -%d($fp)\n", astroot->child[1]->freg, astroot->child[0]->symbol->offset);
         astroot->freg = astroot->child[1]->freg;
     }
 
-    if(astroot->datatype == STR_TYPE){
+    else if(astroot->datatype == STR_TYPE){
         int reg1 = get_register();
         int reg2 = get_register();
         int reg3 = get_register();
@@ -251,7 +276,7 @@ void traverse_ast_assgn_stmt(AST* astroot)
 
         fprintf(fp, "    la $%d, str_buffer\n", reg1);
         fprintf(fp, "    li $%d, %d\n", reg3, astroot->child[0]->symbol->offset);
-        fprintf(fp, "       sub $%d, $fp, $%d\n", reg2, reg3);
+        fprintf(fp, "    sub $%d, $fp, $%d\n", reg2, reg3);
         fprintf(fp,"     __pushloop%d__:", str_label); 
         fprintf(fp, "       lb $%d, 0($%d)\n", reg4, reg1);  
         fprintf(fp, "       sb $%d, ($%d)\n", reg4, reg2);
@@ -263,6 +288,7 @@ void traverse_ast_assgn_stmt(AST* astroot)
         
         // astroot->reg
     }
+
 }
         
 void traverse_ast_cond_stmt(AST* astroot)
@@ -335,12 +361,12 @@ void traverse_ast_array_decl_stmt(AST* astroot)
         traverse(astroot->child[i]);
     }
     astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
-    push_symbol(astroot->symbol);
     printf("Array size: %d\n",astroot->symbol->size);
 
     global_offset += astroot->symbol->size;
     astroot->symbol->offset = global_offset;
     push_symbol(astroot->symbol);
+    
 
     // generate code
     fprintf(fp, "    la $sp, -%d($fp)\n", astroot->symbol->size);
@@ -370,7 +396,32 @@ void traverse_ast_arry_assgn_stmt(AST* astroot)
         printf("array subscript not an integer\n");
         exit(0);
     }
+    astroot->symbol = symbol;
     astroot->datatype = symbol->type;
+
+    int reg2 = astroot->child[1]->reg;
+
+    // int reg2 = astroot->child[0]->child[1]->reg;
+    int reg1 = get_register();
+    int reg3 = get_register();
+    
+    // printf("offset: %d\n",astroot->symbol->offset);
+    fprintf(fp, "    sub $%d, $fp, %d\n", reg1, astroot->symbol->offset);
+    fprintf(fp, "    mul $%d, $%d, 4\n", reg3, reg2);
+    fprintf(fp, "    add $%d, $%d, $%d\n", reg1, reg1, reg3);
+    fprintf(fp, "    lw $%d, 0($%d)\n", reg1, reg1);
+
+    
+    // fprintf(fp, "    mul $%d, $%d, 4\n", reg, reg);
+    // fprintf(fp, "    addi $%d, $%d, %d\n", reg, reg, symbol->offset);
+    // fprintf(fp, "    lw $%d, 0($%d)\n", reg, reg);
+
+    astroot->reg = reg1;
+
+    update_register(reg1);
+    // update_register(reg2);
+    
+
 }
 
 void traverse_ast_array_stmt(AST* astroot)
@@ -437,7 +488,7 @@ void traverse_ast_var_expr(AST* astroot)
         fprintf(fp, "    l.s $f%d, -%d($fp)\n", freg, astroot->symbol->offset); 
         update_register(freg);
     }
-    if(astroot->datatype == STR_TYPE || astroot->datatype == ARRAY_TYPE){
+    if(astroot->datatype == STR_TYPE){
         int reg = get_register();
         astroot->reg = reg;
         fprintf(fp, "    addi $%d, $fp, 0\n", reg);
@@ -564,7 +615,7 @@ void traverse_ast_geq_stmt(AST* astroot)
     update_register(reg0);
     update_register(reg1);
     astroot->reg = reg0;
-    fprintf(fp, "    sge $%d, $%d, $%d\n", reg0, reg1, reg0);
+    fprintf(fp, "    sge $%d, $%d, $%d\n", reg0, reg0, reg1);
 }
 
 void traverse_ast_leq_stmt(AST* astroot)

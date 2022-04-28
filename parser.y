@@ -8,10 +8,7 @@
 #include "Utils/ast.h"
 
 SymbolTable* current_symbol_table;
-SymbolTable* persistent_symbol_table;
 AST* astroot;
-int unused_scope;
-int current_scope;
 
 int yylex();
 int yyerror(char *);

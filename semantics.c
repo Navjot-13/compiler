@@ -9,9 +9,6 @@
 extern FILE *yyin;
 extern AST *astroot;
 extern SymbolTable* current_symbol_table;
-extern SymbolTable* persistent_symbol_table;
-extern int current_scope;
-extern int unused_scope;
 FILE *fp;
 
 int registers[18];      // Registers from $8 to $25
@@ -50,11 +47,6 @@ int main(int argc, char *argv[])
     yyin = fopen(argv[1], "r");
     yyparse();
     current_symbol_table = NULL;
-    persistent_symbol_table = NULL;
-    current_scope = -1;
-    unused_scope = 0;
-    current_scope = unused_scope;
-    ++unused_scope;
     
     fp = fopen("assembly.asm","w+");
     fprintf(fp,"    .data\n");
@@ -115,8 +107,9 @@ void traverse_ast_func_stmt(AST* astroot)
     add_params(astroot);
     traverse(astroot->child[0]);
     traverse(astroot->child[1]);
+    astroot->return_type = astroot->symbol->type;
     // assign the return type of the function
-    astroot->child[2]->symbol = astroot->symbol;
+    astroot->child[2]->return_type = astroot->return_type;
     traverse(astroot->child[2]);
     traverse(astroot->child[3]);
     fprintf(fp,"    jr $ra\n"); // return
@@ -203,10 +196,10 @@ void traverse_ast_func_call_stmt(AST* astroot)
 void traverse_ast_stmt_list(AST* astroot)
 {
     astroot->child[0]->next = label++;
-    // astroot->child[0]->symbol = astroot->symbol;
+    astroot->child[0]->return_type = astroot->return_type;
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
-        astroot->child[1]->symbol = astroot->symbol;
+        astroot->child[1]->return_type = astroot->return_type;
     }
     traverse(astroot->child[0]);
     if(astroot->child[0]->type == ast_cond_stmt || astroot->child[0]->type == ast_loop_stmt){
@@ -287,7 +280,7 @@ void traverse_ast_cond_stmt(AST* astroot)
             fprintf(fp,"    beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
             // fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             // fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
-            astroot->child[0]->child[2]->symbol = astroot->symbol;
+            astroot->child[0]->child[2]->return_type = astroot->return_type;
             traverse(astroot->child[0]->child[2]);
             fprintf(fp,"    j __%d__\n",astroot->next);
             fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->fal);
@@ -301,7 +294,7 @@ void traverse_ast_cond_stmt(AST* astroot)
             fprintf(fp,"    beqz $%d __%d__\n",astroot->child[0]->child[0]->reg,astroot->child[0]->child[0]->fal);
             // fprintf(fp,"   j __%d__\n",astroot->child[0]->child[0]->fal);
             // fprintf(fp,"__%d__:\n",astroot->child[0]->child[0]->tru);
-            astroot->child[0]->child[2]->symbol = astroot->symbol;
+            astroot->child[0]->child[2]->return_type = astroot->return_type;
             traverse(astroot->child[0]->child[2]);
             traverse(astroot->child[0]->child[3]);
         }
@@ -341,11 +334,6 @@ void traverse_ast_array_decl_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
-
-    astroot->scope_no = current_scope;
-    // printf("here\n");
-    // printf("%s\n", astroot->symbol->name);
-    
     astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
     push_symbol(astroot->symbol);
     printf("Array size: %d\n",astroot->symbol->size);
@@ -370,7 +358,6 @@ void traverse_ast_arry_assgn_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
-    astroot->scope_no = current_scope;
     Symbol *symbol = search_symbol(astroot->symbol->name);
     if(symbol == NULL){
         printf("Identifier undeclared\n");
@@ -433,7 +420,6 @@ void traverse_ast_var_expr(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
-    astroot->scope_no = current_scope;
     Symbol *symbol = search_symbol(astroot->symbol->name);
     if (symbol == NULL)
     {
@@ -599,7 +585,6 @@ void traverse_ast_add_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
-    astroot->scope_no = current_scope;
     binary_op_type_checking(astroot);
     
     // Generate Code (Considering only integers for now)
@@ -627,7 +612,6 @@ void traverse_ast_sub_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
-    astroot->scope_no = current_scope;
     binary_op_type_checking(astroot);
 
     // Generate Code (Considering only integers for now)
@@ -656,7 +640,6 @@ void traverse_ast_mul_stmt(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
-    astroot->scope_no = current_scope;
     binary_op_type_checking(astroot);
 
     // Generate Code (Considering only integers for now)
@@ -828,7 +811,6 @@ void traverse_ast_print_stmt(AST* astroot)
 
 void traverse_ast_input_stmt(AST* astroot)
 {
-    astroot->scope_no = current_scope;
     Symbol *symbol = search_symbol(astroot->child[0]->symbol->name);
     if(symbol == NULL){
         printf("Identifier undeclared\n");
@@ -897,19 +879,19 @@ void traverse_ast_input_stmt(AST* astroot)
 void traverse_ast_return_stmt(AST* astroot)
 {
     traverse(astroot->child[0]);
-    if(astroot->symbol == NULL){
+    if(astroot->return_type == -1){
         printf("Error: Return statement in begin function not allowed\n");
         exit(0);
     }
-    if(!convertible_types(astroot->child[0]->datatype,astroot->symbol->type)){
-        printf("Error: Return type of function %s doesn't match with the return statement type\n",astroot->symbol->name);
+    if(!convertible_types(astroot->child[0]->datatype,astroot->return_type)){
+        printf("Error: Return type of function doesn't match with the return statement type\n");
         exit(0);
     }
-    if(astroot->symbol->type == INT_TYPE || astroot->symbol->type == BOOL_TYPE){
+    if(astroot->return_type == INT_TYPE || astroot->return_type == BOOL_TYPE){
         fprintf(fp,"    add $v0 $0 $%d\n",astroot->child[0]->reg);
-    } else if(astroot->symbol->type == DOUBLE_TYPE){
+    } else if(astroot->return_type == DOUBLE_TYPE){
 
-    } else if(astroot->symbol->type == STR_TYPE){
+    } else if(astroot->return_type == STR_TYPE){
 
     }
     fprintf(fp,"    jr $ra\n"); // return

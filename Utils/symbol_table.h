@@ -28,13 +28,10 @@ typedef struct Symbol {
 typedef struct SymbolTable {
     Symbol* symbol_head;
     int size; // size in bytes for the variables in the symbol table
-    int scope;// scope number to which this symbol table belongs
     struct SymbolTable* next;
     struct SymbolTable* prev;
 } SymbolTable;
 
-extern int unused_scope; // the scope number available for usage
-extern int current_scope;// the current scope number
 extern SymbolTable* current_symbol_table;  // Symbol table for current scope
 
 Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next);

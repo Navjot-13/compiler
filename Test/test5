@@ -1,4 +1,5 @@
 begin{
+    array<int, 4> arr;
     int a;
     a = 5;
 }

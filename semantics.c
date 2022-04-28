@@ -203,7 +203,7 @@ void traverse_ast_func_call_stmt(AST* astroot)
 void traverse_ast_stmt_list(AST* astroot)
 {
     astroot->child[0]->next = label++;
-    astroot->child[0]->symbol = astroot->symbol;
+    // astroot->child[0]->symbol = astroot->symbol;
     if(astroot->child[1]){
         astroot->child[1]->next = astroot->next;
         astroot->child[1]->symbol = astroot->symbol;
@@ -336,13 +336,26 @@ void traverse_ast_decl_stmt(AST* astroot)
         
 void traverse_ast_array_decl_stmt(AST* astroot)
 {
+    // if (astroot->symbol == NULL)
+    //     printf("check\n");
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+
     astroot->scope_no = current_scope;
+    // printf("here\n");
+    // printf("%s\n", astroot->symbol->name);
+    
     astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
     push_symbol(astroot->symbol);
     printf("Array size: %d\n",astroot->symbol->size);
+
+    global_offset += astroot->symbol->size;
+    astroot->symbol->offset = global_offset;
+    push_symbol(astroot->symbol);
+
+    // generate code
+    fprintf(fp, "    la $sp, -%d($fp)\n", astroot->symbol->size);
 }
 
 void traverse_ast_expressions_stmt(AST* astroot)
@@ -436,17 +449,27 @@ void traverse_ast_var_expr(AST* astroot)
         int freg = get_fregister();
         astroot->freg = freg;
         fprintf(fp, "    l.s $f%d, -%d($fp)\n", freg, astroot->symbol->offset); 
+        update_register(freg);
     }
-    if(astroot->datatype == STR_TYPE){
+    if(astroot->datatype == STR_TYPE || astroot->datatype == ARRAY_TYPE){
         int reg = get_register();
         astroot->reg = reg;
         fprintf(fp, "    addi $%d, $fp, 0\n", reg);
         fprintf(fp, "    addi $%d, $%d, -%d\n", reg, reg, astroot->symbol->offset);
+        update_register(reg);
     }
+    // if(astroot->datatype == ARRAY_TYPE){
+    //     int reg = get_register();
+    //     astroot->reg = reg;
+    //     fprintf(fp, "    addi $%d, $fp, 0\n", reg);
+    //     fprintf(fp, "    addi $%d, $%d, -%d\n", reg, reg, astroot->symbol->offset);
+    //     update_register(reg);
+    // }
     else{
         int reg = get_register();
         astroot->reg = reg;
         fprintf(fp, "    lw $%d, -%d($fp)\n", reg, astroot->symbol->offset);
+        update_register(reg);
     }
 
 }

@@ -1,14 +1,20 @@
-begin{
-    int b;
-    int a;
-    if(b > 0){
-        ifloop(a > 0){
-            a++;
-        }
+## Find sum of n digits
+
+begin {
+    int n;
+    string s;
+    s = "Enter sum of how many numbers: ";
+    print(s);
+    n = input();
+
+    int sum;
+    sum = 0;
+    ifloop(n >= 1) {
+        sum = sum + n;
+        n = n - 1;
     }
-    else if(a == 0){
-        a += 2;
-    }
-    array<array<int,3>,2> a;
-    bool c;
+
+    s = "The sum is ";
+    print(s);
+    print(sum);
 }

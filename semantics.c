@@ -913,7 +913,7 @@ void traverse_ast_input_stmt(AST* astroot)
     traverse(astroot->child[0]);
 
     // For integer
-    if (symbol->type == INT_TYPE) {
+    if (symbol->type == INT_TYPE || symbol->type == BOOL_TYPE) {
         fprintf(fp, "    li $v0, 5\n");
         fprintf(fp, "    syscall\n");
 
@@ -925,13 +925,14 @@ void traverse_ast_input_stmt(AST* astroot)
     }
 
     // For float
-    if (symbol->type == DOUBLE_TYPE || symbol->type == BOOL_TYPE) {
+    if (symbol->type == DOUBLE_TYPE) {
         fprintf(fp, "    li $v0, 6\n");
         fprintf(fp, "    syscall\n");
 
         int freg1 = get_fregister();
         astroot->freg = freg1;
         fprintf(fp, "    mov.s $f%d, $f0\n", freg1);
+        fprintf(fp, "    s.s $f%d, -%d($fp)\n", freg1, astroot->child[0]->symbol->offset);
         update_fregister(freg1);
     }
 

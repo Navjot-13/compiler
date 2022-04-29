@@ -1,9 +1,0 @@
-begin{
-    decimal a;
-    decimal b;
-    decimal c;
-    a = 4.4;
-    b = 2.0;
-    c = a / b;
-    print(c);
-}

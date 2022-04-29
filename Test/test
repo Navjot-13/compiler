@@ -1,7 +1,7 @@
-## Find sum
+## Hello World Program
 
 begin {
-    int a;
-    ## Find sum of n digits
-    a = 5;
+    string s;
+    s = "Hello World!";
+    print(s);
 }

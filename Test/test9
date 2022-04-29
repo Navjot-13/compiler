@@ -1,0 +1,52 @@
+## Selection sort for an array
+
+begin {
+    array<int, 5> arr;  ## Array of integers
+    
+    ## Initialize array
+    int i;
+    i = 0;
+
+    ifloop (i < 5) {
+        arr[i] = 10 - i;
+        i = i + 1;
+    }
+
+    ## Initial values
+    i = 0;
+    ifloop(i < 5) {
+        print(arr[i]);
+        i = i + 1;
+    }
+
+    ## Selection sort
+    int j;
+    j = 0;
+    i = 0;
+
+
+    ifloop (i < 5) {
+        int min;
+        min = i;
+        j = i + 1;
+        ifloop(j < 5) {
+            if (arr[j] < arr[min]) {
+                min = j;
+            }
+            j = j + 1;
+        }   
+        int temp;
+        temp = arr[min];
+        arr[min] = arr[i];
+        arr[i] = temp;
+
+        i = i + 1;
+    }
+
+    ## Final values
+    i = 0;
+    ifloop(i < 5) {
+        print(arr[i]);
+        i = i + 1;
+    }
+}

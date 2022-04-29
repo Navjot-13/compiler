@@ -1,4 +1,4 @@
-# Implementing our own mod function
+## Implementing our own mod function
 
 int mod (int a, int b) {
     decimal d;

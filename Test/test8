@@ -1,0 +1,15 @@
+## Identifier undeclared multiple scopes
+
+begin {
+    int x;
+    x = 5;
+
+    ifloop (x < 5) {
+        int y;
+        if (y > 5) {
+            int z;
+            z = 5;
+        }
+        z = 0;
+    }
+}

@@ -1,0 +1,23 @@
+## Nested loops
+
+begin {
+    int weeks;
+    weeks = 0;
+    int days;
+    days = 0;
+
+    ## Outer loop prints weeks
+    ifloop (weeks < 3) {
+        string s;
+        s = "Week: ";
+        print(s);
+        print(weeks);
+        ifloop(days < 7) {
+            s = "Day: ";
+            print(s);
+            print(days);
+            days = days + 1;
+        }
+        weeks = weeks + 1;
+    }
+}

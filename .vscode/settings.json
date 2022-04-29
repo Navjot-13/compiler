@@ -3,6 +3,7 @@
         "*.ejs": "html",
         "typeinfo": "c",
         "ast.h": "c",
-        "test": "cpp"
+        "test": "cpp",
+        "test4": "cpp"
     }
 }

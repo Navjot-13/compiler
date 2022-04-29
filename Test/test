@@ -1,26 +1,7 @@
-decimal add(int a,int b){
-    if(b > 0){
-        ifloop(a > 0){
-            a++;
-        }
-    } else if (b == 0){
-        int v;
-        a = a + v;
-    }
-    else{
-        a += 2;
-    }
-    bool c;
-    c = true;
-    return a + b;
-}
-
-int sub(string s,int c){
-
-}
+## Hello World Program
 
 begin {
-    int c;
-    int a,b;
-    c = add(a,c);
+    string s;
+    s = "Hello World!";
+    print(s);
 }

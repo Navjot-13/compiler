@@ -1,7 +1,6 @@
 begin {
-    bool a;
-    a = true;
-    print(a);
-    a = false;
-    print(a);
+    int b,a;
+    a = 4;
+    b = -a;
+    print(b);
 }

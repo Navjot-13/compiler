@@ -1,9 +1,17 @@
-begin{
-    decimal a;
-    decimal b;
-    decimal c;
-    a = 4.4;
-    b = 2.0;
-    c = a / b;
-    print(c);
+begin {
+    decimal a,b;
+    int c;
+    c = 5;
+    a = 5.5;
+    b = a + c;
+    print(b);
+
+    int d;
+    d = 3;
+    b = c + d;
+    print(b);
+
+    int e;
+    e = a + b;
+    print(e);
 }

@@ -749,6 +749,15 @@ void traverse_ast_unary_not(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    astroot->datatype = astroot->child[0]->datatype;
+
+    // Generate Code (Considering only integers for now)
+    if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    xori $%d, $%d, 1\n", astroot->reg, reg0);
+        update_register(reg0);
+    }
 }
 
 void traverse_ast_unary_add(AST* astroot)
@@ -757,6 +766,22 @@ void traverse_ast_unary_add(AST* astroot)
         traverse(astroot->child[i]);
     }
     astroot->datatype = astroot->child[0]->datatype;
+
+    // Generate Code (Considering only integers for now)
+    if(astroot->datatype == INT_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    addi $%d, $%d, 0\n", astroot->reg, reg0);
+        update_register(reg0);
+    }
+
+    // for floats
+    if(astroot->datatype == DOUBLE_TYPE){
+        int freg0 = astroot->child[0]->freg;
+        astroot->freg = freg0;
+        fprintf(fp, "    addi.s $f%d, $f%d, 0.0\n", astroot->freg, freg0);
+        update_fregister(freg0);
+    }
 }
 
 void traverse_ast_unary_sub(AST* root)
@@ -765,6 +790,23 @@ void traverse_ast_unary_sub(AST* root)
         traverse(astroot->child[i]);
     }
     astroot->datatype = astroot->child[0]->datatype;
+    
+    // Generate Code (Considering only integers for now)
+    if(astroot->datatype == INT_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    sub $%d, $0, $%d\n", astroot->reg, reg0);
+        update_register(reg0);
+    }
+
+    // for floats
+    if(astroot->datatype == DOUBLE_TYPE){
+        int freg0 = astroot->child[0]->freg;
+        astroot->freg = freg0;
+        fprintf(fp, "    sub.s $f%d, $f0, $f%d\n", astroot->freg, freg0);
+        update_fregister(freg0);
+    }
+    
 }
 
 void traverse_ast_const_val(AST* astroot)
@@ -871,7 +913,7 @@ void traverse_ast_input_stmt(AST* astroot)
     traverse(astroot->child[0]);
 
     // For integer
-    if (symbol->type == INT_TYPE) {
+    if (symbol->type == INT_TYPE || symbol->type == BOOL_TYPE) {
         fprintf(fp, "    li $v0, 5\n");
         fprintf(fp, "    syscall\n");
 
@@ -883,13 +925,14 @@ void traverse_ast_input_stmt(AST* astroot)
     }
 
     // For float
-    if (symbol->type == DOUBLE_TYPE || symbol->type == BOOL_TYPE) {
+    if (symbol->type == DOUBLE_TYPE) {
         fprintf(fp, "    li $v0, 6\n");
         fprintf(fp, "    syscall\n");
 
         int freg1 = get_fregister();
         astroot->freg = freg1;
         fprintf(fp, "    mov.s $f%d, $f0\n", freg1);
+        fprintf(fp, "    s.s $f%d, -%d($fp)\n", freg1, astroot->child[0]->symbol->offset);
         update_fregister(freg1);
     }
 
@@ -1175,9 +1218,25 @@ void typecheck(AST *astroot) {
     if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE) {
         astroot->child[1]->val.int_val= (int)astroot->child[1]->val.double_val;
         astroot->datatype = INT_TYPE;
+        astroot->child[1]->datatype = INT_TYPE;
+
+        // Assembly code to convert to integer
+        int reg = get_register();
+        fprintf(fp, "    cvt.w.s $f%d, $f%d\n", astroot->child[1]->freg, astroot->child[1]->freg);
+        fprintf(fp, "    mfc1 $%d, $f%d\n", reg, astroot->child[1]->freg);    
+        astroot->child[1]->reg = reg;
+
     } else if (astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE) {
         astroot->child[1]->val.double_val= (double)astroot->child[1]->val.int_val;
         astroot->datatype = DOUBLE_TYPE;
+        astroot->child[1]->datatype = DOUBLE_TYPE;
+
+        // Assembly code to convert to double
+        int freg = get_fregister();
+        fprintf(fp, "    mtc1 $%d, $f%d\n", astroot->child[1]->reg, freg);
+        fprintf(fp, "    cvt.s.w $f%d, $f%d\n", freg, freg);
+        astroot->child[1]->freg = freg;
+
     } else if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == BOOL_TYPE) {
         astroot->child[1]->val.int_val= (int)astroot->child[1]->val.bool_val;
         astroot->datatype = INT_TYPE;
@@ -1205,6 +1264,25 @@ void binary_op_type_checking(AST *astroot){
     }
     if(astroot->child[0]->datatype == DOUBLE_TYPE || astroot->child[1]->datatype == DOUBLE_TYPE){
         astroot->datatype = DOUBLE_TYPE;
+
+        if (astroot->child[1]->datatype == INT_TYPE || astroot->child[1]->datatype == BOOL_TYPE) {
+            astroot->child[1]->datatype = DOUBLE_TYPE;
+            astroot->child[1]->val.double_val= (double)astroot->child[1]->val.int_val;
+            int freg = get_fregister();
+            fprintf(fp, "    mtc1 $%d, $f%d\n", astroot->child[1]->reg, freg);
+            fprintf(fp, "    cvt.s.w $f%d, $f%d\n", freg, freg);
+            astroot->child[1]->freg = freg;
+        }
+
+        if (astroot->child[0]->datatype == INT_TYPE || astroot->child[0]->datatype == BOOL_TYPE) {
+            astroot->child[0]->datatype = DOUBLE_TYPE;
+            astroot->child[0]->val.double_val= (double)astroot->child[0]->val.int_val;
+            int freg = get_fregister();
+            fprintf(fp, "    mtc1 $%d, $f%d\n", astroot->child[0]->reg, freg);
+            fprintf(fp, "    cvt.s.w $f%d, $f%d\n", freg, freg);
+            astroot->child[0]->freg = freg;
+        }
+
     } else if(astroot->child[0]->datatype == INT_TYPE || astroot->child[1]->datatype == INT_TYPE){
         astroot->datatype = INT_TYPE;
     } else{

@@ -1,0 +1,8 @@
+begin {
+    decimal a,b;
+    int c;
+    c = 5;
+    a = 5.5;
+    b = a + c;
+    print(b);
+}

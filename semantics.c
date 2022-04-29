@@ -1248,6 +1248,25 @@ void binary_op_type_checking(AST *astroot){
     }
     if(astroot->child[0]->datatype == DOUBLE_TYPE || astroot->child[1]->datatype == DOUBLE_TYPE){
         astroot->datatype = DOUBLE_TYPE;
+
+        if (astroot->child[1]->datatype == INT_TYPE || astroot->child[1]->datatype == BOOL_TYPE) {
+            astroot->child[1]->datatype = DOUBLE_TYPE;
+            astroot->child[1]->val.double_val= (double)astroot->child[1]->val.int_val;
+            int freg = get_fregister();
+            fprintf(fp, "    mtc1 $%d, $f%d\n", astroot->child[1]->reg, freg);
+            fprintf(fp, "    cvt.s.w $f%d, $f%d\n", freg, freg);
+            astroot->child[1]->freg = freg;
+        }
+
+        if (astroot->child[0]->datatype == INT_TYPE || astroot->child[0]->datatype == BOOL_TYPE) {
+            astroot->child[0]->datatype = DOUBLE_TYPE;
+            astroot->child[0]->val.double_val= (double)astroot->child[0]->val.int_val;
+            int freg = get_fregister();
+            fprintf(fp, "    mtc1 $%d, $f%d\n", astroot->child[0]->reg, freg);
+            fprintf(fp, "    cvt.s.w $f%d, $f%d\n", freg, freg);
+            astroot->child[0]->freg = freg;
+        }
+
     } else if(astroot->child[0]->datatype == INT_TYPE || astroot->child[1]->datatype == INT_TYPE){
         astroot->datatype = INT_TYPE;
     } else{

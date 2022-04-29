@@ -252,33 +252,31 @@ L:              L ',' ID
 
 array_decl:     ARR '<' X ',' INT_CONST'>' ID SCOL
                 {
-                        $$ = make_node(ast_array_decl_stmt,$3,NULL,NULL,NULL);
+                        AST* ast = make_node(ast_const_val,NULL,NULL,NULL,NULL);
+                        ast->val.int_val = $5;
+                        ast->datatype = INT_TYPE;
+                        $$ = make_node(ast_array_decl_stmt,$3,ast,NULL,NULL);
                         char* name = (char*)malloc((strlen($7)+1)*sizeof(char));
                         strcpy(name,$7);
                         $$->symbol = symbol_init(name,$3->datatype,NULL,NULL);
                         $$->symbol->is_array = 1;
-                        if($3->size == -1){
-                                $$->symbol->size = $5;
-                        } else {
-                                $$->symbol->size = $3->size * $5;
-                        }
+                        
                 }
                 ;
 X:              ARR '<' X ',' INT_CONST '>' 
                 {
-                        $$ = make_node(ast_array_stmt,$3,NULL,NULL,NULL);
-                        if($3->size == -1){
-                                $$->size = $5;
-                        } else {
-                                $$->size = $3->size * $5;
-                        }
+                        AST* ast = make_node(ast_const_val,NULL,NULL,NULL,NULL);
+                        ast->val.int_val = $5;
+                        ast->datatype = INT_TYPE;
+                        $$ = make_node(ast_array_stmt,$3,ast,NULL,NULL);
                         $$->datatype = $3->datatype;
+                        
                 }
 
                 | data_type
                 
                 {
-                        $$ = make_node(ast_array_datatype_stmt,NULL,NULL,NULL,NULL);
+                        $$ = make_node(ast_array_stmt,NULL,NULL,NULL,NULL);
                         $$->datatype = $1;
                 }
                 ;

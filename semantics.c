@@ -219,7 +219,6 @@ void traverse_ast_assgn_stmt(AST* astroot)
     astroot->datatype = astroot->child[0]->datatype;  
     typecheck(astroot);
     // Generate Code (Considering only integers for now)
-
     printf("asdfasdfasdfas %d\n",astroot->child[0]->symbol->is_array);
 
     if(astroot->child[0]->symbol->is_array == 1){
@@ -357,19 +356,52 @@ void traverse_ast_array_decl_stmt(AST* astroot)
 {
     // if (astroot->symbol == NULL)
     //     printf("check\n");
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
-    astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
-    printf("Array size: %d\n",astroot->symbol->size);
+    // astroot->symbol->size = get_size(astroot->symbol->type) * astroot->symbol->size;
+    // printf("Array size: %d\n",astroot->symbol->size);
 
-    global_offset += astroot->symbol->size;
-    astroot->symbol->offset = global_offset;
+    // global_offset += astroot->symbol->size;
+    
+    // astroot->symbol->offset = global_offset;
+
+    astroot->symbol->array_list = symbol_init(astroot->symbol->name,astroot->symbol->type,NULL,astroot->child[0]->symbol);
+    // astroot->symbol->array_list = astroot->child[0]->symbol;
+    // printf("SIZE: %d\n",astroot->child[0]->symbol->size);
+
+    // astroot->symbol->array_list = astroot->child[0]->symbol->array_list;
+    astroot->symbol->array_list->size = astroot->child[0]->symbol->size * astroot->child[1]->val.int_val;
+    global_offset += astroot->symbol->array_list->size;
+    astroot->symbol->array_list->offset = global_offset;
+    // printf("SIZE OF THE ARRAY: %d\n",astroot->symbol->array_list->size);
     push_symbol(astroot->symbol);
     
 
     // generate code
-    fprintf(fp, "    la $sp, -%d($fp)\n", astroot->symbol->size);
+    fprintf(fp, "    la $sp, -%d($fp)\n", astroot->symbol->array_list->size);
+}
+
+void traverse_ast_array_stmt(AST* astroot)
+{
+    traverse(astroot->child[0]);
+    traverse(astroot->child[1]);
+    if(astroot->child[0] == NULL){
+        astroot->symbol = symbol_init("array",astroot->datatype,NULL,NULL);
+        // astroot->symbol->array_list = symbol_init("array",astroot->datatype,NULL,NULL);
+        // astroot->symbol->array_list->is_array = 1;
+        // astroot->symbol->array_list->size = 1;
+        astroot->symbol->size = 1;
+        astroot->symbol->is_array = 1;
+    } else {
+        astroot->symbol = symbol_init("array",astroot->datatype,NULL,astroot->child[0]->symbol);
+        // astroot->symbol->array_list = symbol_init("array",astroot->datatype,NULL,NULL);
+        // astroot->symbol->array_list->is_array = 1;
+        astroot->symbol->is_array = 1;
+        astroot->symbol->size = astroot->child[1]->val.int_val * astroot->child[0]->symbol->size;
+        // printf("SIZE: %d\n",astroot->symbol->size);
+        astroot->child[0]->symbol->prev = astroot->symbol;
+    }
 }
 
 void traverse_ast_expressions_stmt(AST* astroot)
@@ -381,54 +413,90 @@ void traverse_ast_expressions_stmt(AST* astroot)
         
 void traverse_ast_arry_assgn_stmt(AST* astroot)
 {
-    for(int i = 0; i <4;++i){
+    for(int i = 0; i < 4;++i){
         traverse(astroot->child[i]);
     }
-    Symbol *symbol = search_symbol(astroot->symbol->name);
-    if(symbol == NULL){
-        printf("Identifier undeclared\n");
+
+    int reg1 = get_register();
+    int reg2 = get_register();
+    int reg3 = get_register();
+    reg2 = astroot->child[1]->reg;
+
+    if(astroot->child[0] == NULL){
+        Symbol *symbol = search_symbol(astroot->symbol->name);
+        if(symbol == NULL){
+            printf("Identifier undeclared\n");
+        }
+        if(symbol->is_array != 1){
+            printf("Identifier not an array type.\n");
+            exit(0);
+        }
+        symbol = symbol->array_list;
+        Symbol* temp = symbol->next;
+        // write target code
+        astroot->symbol = symbol->next;
+        astroot->datatype = temp->type;
+        astroot->symbol->next->offset = astroot->symbol->offset;
+        // printf("WIDTH: %d\n",temp->size);
+        printf("offset: %d\n",astroot->symbol->offset);
+        // fprintf(fp,"    sub $%d, $fp, %d\n",reg1,astroot->symbol->offset);
+        // fprintf(fp,"    mul $%d, $%d, $%d\n",reg1,reg1,reg3);
+        // fprintf(fp,"    lw $%d, 0($%d)\n",reg1,reg1);
+        fprintf(fp,"    li $%d, %d\n", reg1,temp->size);
+        fprintf(fp,"    mul $%d, $%d, $%d\n",reg3,reg2,reg1);
+
+        astroot->reg = reg3;
+
+        update_register(reg3);
+        printf("SIZES: %d\n",astroot->symbol->size);
+
+    } else {
+        // write target code
+        astroot->symbol = astroot->child[0]->symbol->next;
+        astroot->datatype = astroot->symbol->type;
+        // printf("SIZE: %d\n",astroot->symbol->next->size);
+        int reg4 = get_register();
+        reg4 = astroot->child[0]->reg;
+        // fprintf(fp,"    mul $%d, $%d, 4\n",reg3,reg2);
+        // fprintf(fp,"    add $%d, $%d, $%d\n",reg1,reg3,reg4);
+        fprintf(fp,"    li $%d, %d\n", reg1,astroot->symbol->size);
+        fprintf(fp,"    mul $%d, $%d,$%d\n",reg3,reg2,reg1);
+        fprintf(fp,"    add $%d, $%d, $%d\n",reg1, reg4, reg3);
+        astroot->reg = reg1;
+        printf("SIZES: %d\n",astroot->symbol->size);
+        if(astroot->symbol->size == 1){
+            fprintf(fp,"    li $%d, %d",reg2,astroot->symbol->offset);
+            fprintf(fp,"    sub $%d, $%d, $%d\n",);
+            fprintf(fp,"    mul $%d, %");
+            
+        }
     }
-    if(symbol->is_array != 1){
-        printf("Identifier not an array type.\n");
-        exit(0);
-    }
+
+    // if(astroot->symbol->size == 1){
+    //     // fprintf(fp,"    sub $%d, $fp, %d\n",reg1,astroot->symbol->offset);
+    //     printf("REACHED\n");
+
+    // }
     if(astroot->child[1]->datatype != INT_TYPE){
         printf("array subscript not an integer\n");
         exit(0);
     }
-    astroot->symbol = symbol;
-    astroot->datatype = symbol->type;
-
-    int reg2 = astroot->child[1]->reg;
-
-    // int reg2 = astroot->child[0]->child[1]->reg;
-    int reg1 = get_register();
-    int reg3 = get_register();
     
-    // printf("offset: %d\n",astroot->symbol->offset);
-    fprintf(fp, "    sub $%d, $fp, %d\n", reg1, astroot->symbol->offset);
-    fprintf(fp, "    mul $%d, $%d, 4\n", reg3, reg2);
-    fprintf(fp, "    add $%d, $%d, $%d\n", reg1, reg1, reg3);
-    fprintf(fp, "    lw $%d, 0($%d)\n", reg1, reg1);
+
+    
+    
 
     
     // fprintf(fp, "    mul $%d, $%d, 4\n", reg, reg);
     // fprintf(fp, "    addi $%d, $%d, %d\n", reg, reg, symbol->offset);
     // fprintf(fp, "    lw $%d, 0($%d)\n", reg, reg);
 
-    astroot->reg = reg1;
+    // astroot->reg = reg1;
 
-    update_register(reg1);
+    // update_register(reg1);
     // update_register(reg2);
     
 
-}
-
-void traverse_ast_array_stmt(AST* astroot)
-{
-    for(int i = 0; i <4;++i){
-        traverse(astroot->child[i]);
-    }
 }
 
 void traverse_ast_variable_stmt(AST* astroot)
@@ -1162,6 +1230,10 @@ void traverse(AST *astroot)
         {
             traverse_ast_return_stmt(astroot);
             break;
+        }
+        case ast_array_datatype_stmt:
+        {
+            // do nothing
         }
         default:
         {

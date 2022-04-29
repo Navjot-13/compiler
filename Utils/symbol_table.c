@@ -58,6 +58,7 @@ void push_symbol(Symbol* symbol) {
     new_symbol->size = symbol->size;
     new_symbol->offset = symbol->offset;
     new_symbol->type = symbol->type;
+    new_symbol->array_list = symbol->array_list;
     if (current_symbol_table->symbol_head == NULL) {
         current_symbol_table->symbol_head = new_symbol;
     } else {
@@ -83,5 +84,6 @@ Symbol* symbol_init(char* name, int type, Symbol* prev, Symbol* next) {
     new_symbol->param_list = NULL;
     new_symbol->size = 0;
     new_symbol->offset=0;
+    new_symbol->array_list = NULL;
     return new_symbol;
 }

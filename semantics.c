@@ -244,7 +244,7 @@ void traverse_ast_assgn_stmt(AST* astroot)
         }
     }
 
-    else if(astroot->datatype == INT_TYPE){
+    else if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
         printf("%s is the register with offset %d\n", astroot->child[0]->symbol->name, astroot->child[0]->symbol->offset);
         fprintf(fp, "    sw $%d, -%d($fp)\n", astroot->child[1]->reg, astroot->child[0]->symbol->offset);
         astroot->reg = astroot->child[1]->reg;
@@ -1296,7 +1296,7 @@ int get_size(int type){
         return 300;
     }
     if(type == BOOL_TYPE){
-        return 1;
+        return 4;
     }
     return 0;
 }

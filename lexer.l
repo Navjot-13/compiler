@@ -97,9 +97,9 @@ letter_ [A-Za-z_]
 
 "return"                        return RETURN;
 
-"##.*"                          { return CMNT; }
+##.*                            ;
 
-"#\*(\*(?!#)|[^*])*\*#"         { return MLTI_CMNT; }
+"#\*(\*(?!#)|[^*])*\*#"         ;
 
 \".*\"|\'.*\'                   { strcpy(yylval.str_val, yytext); return STR_CONST; }
 

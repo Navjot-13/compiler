@@ -1218,9 +1218,25 @@ void typecheck(AST *astroot) {
     if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == DOUBLE_TYPE) {
         astroot->child[1]->val.int_val= (int)astroot->child[1]->val.double_val;
         astroot->datatype = INT_TYPE;
+        astroot->child[1]->datatype = INT_TYPE;
+
+        // Assembly code to convert to integer
+        int reg = get_register();
+        fprintf(fp, "    cvt.w.s $f%d, $f%d\n", astroot->child[1]->freg, astroot->child[1]->freg);
+        fprintf(fp, "    mfc1 $%d, $f%d\n", reg, astroot->child[1]->freg);    
+        astroot->child[1]->reg = reg;
+
     } else if (astroot->child[0]->datatype == DOUBLE_TYPE && astroot->child[1]->datatype == INT_TYPE) {
         astroot->child[1]->val.double_val= (double)astroot->child[1]->val.int_val;
         astroot->datatype = DOUBLE_TYPE;
+        astroot->child[1]->datatype = DOUBLE_TYPE;
+
+        // Assembly code to convert to double
+        int freg = get_fregister();
+        fprintf(fp, "    mtc1 $%d, $f%d\n", astroot->child[1]->reg, freg);
+        fprintf(fp, "    cvt.s.w $f%d, $f%d\n", freg, freg);
+        astroot->child[1]->freg = freg;
+
     } else if (astroot->child[0]->datatype == INT_TYPE && astroot->child[1]->datatype == BOOL_TYPE) {
         astroot->child[1]->val.int_val= (int)astroot->child[1]->val.bool_val;
         astroot->datatype = INT_TYPE;

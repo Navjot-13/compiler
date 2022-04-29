@@ -5,4 +5,13 @@ begin {
     a = 5.5;
     b = a + c;
     print(b);
+
+    int d;
+    d = 3;
+    b = c + d;
+    print(b);
+
+    int e;
+    e = a + b;
+    print(e);
 }

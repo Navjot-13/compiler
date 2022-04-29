@@ -63,7 +63,6 @@ typedef struct AST{
         int return_type;
         Symbol *symbol;
         int size;
-        int scope_no;// scope number of the current AST node
         union {
                 int int_val;
                 double double_val;

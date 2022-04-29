@@ -1,21 +1,25 @@
-## Find factorial of a function
-
-int factorial(int a){
-    if(a == 1){
-        return 1;
-    }
-    return a * factorial(a-1); ## Recursion is used here
-}
+## Some examples of type conversion
 
 begin {
-    int a;
-    string s;
-    s = "Enter a number: ";
-    print(s);
-    a = input();
-    int c;
-    c = factorial(a);
-    s = "The factorial is: ";
-    print(s);
-    print(c);
+    int i1, i2;
+    decimal d1, d2;
+    int resi;
+    decimal resd;
+
+    i1 = 11;
+    i2 = 3;
+    d1 = 5.5;
+    d2 = 6.6;
+
+    resi = i1 - d1;
+    print(resi);
+
+    resi = d1 * d2;
+    print(resi);
+
+    resd = i1 / i2;
+    print(resd);
+
+    resd = i1 * d2;
+    print(resd);
 }

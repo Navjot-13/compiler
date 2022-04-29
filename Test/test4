@@ -1,17 +1,19 @@
-begin {
-    decimal a,b;
+# Implementing our own mod function
+
+int mod (int a, int b) {
+    decimal d;
+    d = a / b;
     int c;
-    c = 5;
-    a = 5.5;
-    b = a + c;
-    print(b);
+    c = d;
+    return a - (b*c);
+}
 
-    int d;
-    d = 3;
-    b = c + d;
-    print(b);
-
-    int e;
-    e = a + b;
-    print(e);
+begin {
+    int a;
+    a = input();
+    int b;
+    b = input();
+    int y;
+    y = mod(a,b);
+    print(y);
 }

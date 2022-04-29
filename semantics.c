@@ -749,6 +749,15 @@ void traverse_ast_unary_not(AST* astroot)
     for(int i = 0; i <4;++i){
         traverse(astroot->child[i]);
     }
+    astroot->datatype = astroot->child[0]->datatype;
+
+    // Generate Code (Considering only integers for now)
+    if(astroot->datatype == INT_TYPE || astroot->datatype == BOOL_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    xori $%d, $%d, 1\n", astroot->reg, reg0);
+        update_register(reg0);
+    }
 }
 
 void traverse_ast_unary_add(AST* astroot)

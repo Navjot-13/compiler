@@ -766,6 +766,22 @@ void traverse_ast_unary_add(AST* astroot)
         traverse(astroot->child[i]);
     }
     astroot->datatype = astroot->child[0]->datatype;
+
+    // Generate Code (Considering only integers for now)
+    if(astroot->datatype == INT_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    addi $%d, $%d, 0\n", astroot->reg, reg0);
+        update_register(reg0);
+    }
+
+    // for floats
+    if(astroot->datatype == DOUBLE_TYPE){
+        int freg0 = astroot->child[0]->freg;
+        astroot->freg = freg0;
+        fprintf(fp, "    addi.s $f%d, $f%d, 0.0\n", astroot->freg, freg0);
+        update_fregister(freg0);
+    }
 }
 
 void traverse_ast_unary_sub(AST* root)
@@ -774,6 +790,23 @@ void traverse_ast_unary_sub(AST* root)
         traverse(astroot->child[i]);
     }
     astroot->datatype = astroot->child[0]->datatype;
+    
+    // Generate Code (Considering only integers for now)
+    if(astroot->datatype == INT_TYPE){
+        int reg0 = astroot->child[0]->reg;
+        astroot->reg = reg0;
+        fprintf(fp, "    sub $%d, $0, $%d\n", astroot->reg, reg0);
+        update_register(reg0);
+    }
+
+    // for floats
+    if(astroot->datatype == DOUBLE_TYPE){
+        int freg0 = astroot->child[0]->freg;
+        astroot->freg = freg0;
+        fprintf(fp, "    sub.s $f%d, $f0, $f%d\n", astroot->freg, freg0);
+        update_fregister(freg0);
+    }
+    
 }
 
 void traverse_ast_const_val(AST* astroot)
